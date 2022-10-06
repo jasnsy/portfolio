@@ -1,0 +1,89 @@
+---
+import ContentSection from "~/components/content-section.astro";
+import CompatibilityList from "~/components/compatibility-list.astro";
+
+const frameworks = [
+  {
+    title: "React",
+    icon: "fa-brands:react",
+    url: "https://reactjs.org/",
+  },
+  {
+    title: "Vue",
+    icon: "fa-brands:vuejs",
+    url: "https://vuejs.org/",
+  },
+  {
+    title: "Next",
+    icon: "frameworks/next",
+    url: "https://nextjs.org/",
+  },
+  {
+    title: "Astro",
+    icon: "frameworks/logomark",
+    url: "https://www.astro.build/",
+  },
+  {
+    title: "Node",
+    icon: "fa-brands:node-js",
+    url: "https://nodejs.org/en/",
+  },
+  {
+    title: "Express",
+    icon: "frameworks/express",
+    url: "https://expressjs.com/",
+  },
+];
+
+const languages = [
+  {
+    title: "JavaScript",
+    icon: "fa-brands:js",
+    url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+  },
+  {
+    title: "HTML5",
+    icon: "fa-brands:html5",
+    url: "https://developer.mozilla.org/en-US/docs/Web/HTML",
+  },
+  {
+    title: "CSS3",
+    icon: "fa-brands:css3-alt",
+    url: "https://www.w3schools.com/cssref/",
+  },
+  {
+    title: "GraphQL",
+    icon: "platforms/graphql",
+    url: "https://graphql.org/",
+  },
+  {
+    title: "GitHub",
+    icon: "fa-brands:github",
+    url: "https://www.github.com/",
+  },
+  {
+    title: "AWS",
+    icon: "fa-brands:aws",
+    url: "https://aws.amazon.com/",
+  },
+];
+---
+
+<ContentSection title="Tech Stack" id="stack">
+  <Fragment slot="lead">
+    I have working <span class="text-primary">experience</span> with many {" "}
+    <span class="text-primary">frameworks</span>
+    and other <span class="text-primary">technologies</span>.
+    Here are a few but I've worked on projects with <span class="text-primary">many more</span>.
+  </Fragment>
+  <CompatibilityList
+    title="Frameworks"
+    data={frameworks}
+    url="https://docs.astro.build/core-concepts/framework-components/"
+  />
+  <CompatibilityList
+    title="Other"
+    data={languages}
+    url="https://docs.astro.build/guides/deploy/"
+  />
+</ContentSection>

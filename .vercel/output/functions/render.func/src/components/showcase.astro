@@ -1,0 +1,27 @@
+---
+import ContentSection from "~/components/content-section.astro";
+import ShowcaseCard from "~/components/showcase-card.astro";
+import sites from "~/data/showcase/sites.json";
+---
+
+<ContentSection title="Projects" id="projects">
+  <Fragment slot="lead">
+    Aside from my <span class="text-primary">portfolio</span> website, which you are currently on.
+    Here are some mini side <span class="text-primary">projects</span> I've created for 
+    <span class="text-primary">fun</span> and <span class="text-primary">practice</span>.
+  </Fragment>
+  <div class="max-w-6xl space-y-2">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {
+        sites.map(({ title, image, url }) => (
+          <ShowcaseCard title={title} image={image} url={url} />
+        ))
+      }
+    </div>
+    <p class="text-sm text-right">
+      <a class="text-primary" href="https://github.com/jasnsy">
+        ...and more &rarr;
+      </a>
+    </p>
+  </div>
+</ContentSection>
