@@ -4,7 +4,7 @@ import vercel from "@astrojs/vercel/serverless";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://astro-moon-landing.netlify.app/",
+  site: "https://astro-portfolio-gilt.vercel.app/",
   integrations: [tailwind()],
   vite: {
     ssr: {
