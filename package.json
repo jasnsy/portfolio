@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^2.1.0",
-    "micromodal": "^0.4.10"
+    "micromodal": "^0.4.10",
+    "parseuri": "^0.0.6"
   }
 }
