@@ -12,6 +12,4 @@ export default defineConfig({
       external: ["@11ty/eleventy-img", "svgo"]
     }
   },
-  output: "server",
-  adapter: vercel()
 });

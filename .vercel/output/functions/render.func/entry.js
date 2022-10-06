@@ -12,7 +12,1126 @@ import 'string-width';
 import 'path-browserify';
 import { compile } from 'path-to-regexp';
 
-const ASTRO_VERSION = "1.2.1";
+const escapeHTML$1 = escape;
+class HTMLString$1 extends String {
+}
+const markHTMLString$1 = (value) => {
+  if (value instanceof HTMLString$1) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return new HTMLString$1(value);
+  }
+  return value;
+};
+
+const PROP_TYPE$1 = {
+  Value: 0,
+  JSON: 1,
+  RegExp: 2,
+  Date: 3,
+  Map: 4,
+  Set: 5,
+  BigInt: 6,
+  URL: 7
+};
+function serializeArray$1(value, metadata = {}, parents = /* @__PURE__ */ new WeakSet()) {
+  if (parents.has(value)) {
+    throw new Error(`Cyclic reference detected while serializing props for <${metadata.displayName} client:${metadata.hydrate}>!
+
+Cyclic references cannot be safely serialized for client-side usage. Please remove the cyclic reference.`);
+  }
+  parents.add(value);
+  const serialized = value.map((v) => {
+    return convertToSerializedForm$1(v, metadata, parents);
+  });
+  parents.delete(value);
+  return serialized;
+}
+function serializeObject$1(value, metadata = {}, parents = /* @__PURE__ */ new WeakSet()) {
+  if (parents.has(value)) {
+    throw new Error(`Cyclic reference detected while serializing props for <${metadata.displayName} client:${metadata.hydrate}>!
+
+Cyclic references cannot be safely serialized for client-side usage. Please remove the cyclic reference.`);
+  }
+  parents.add(value);
+  const serialized = Object.fromEntries(
+    Object.entries(value).map(([k, v]) => {
+      return [k, convertToSerializedForm$1(v, metadata, parents)];
+    })
+  );
+  parents.delete(value);
+  return serialized;
+}
+function convertToSerializedForm$1(value, metadata = {}, parents = /* @__PURE__ */ new WeakSet()) {
+  const tag = Object.prototype.toString.call(value);
+  switch (tag) {
+    case "[object Date]": {
+      return [PROP_TYPE$1.Date, value.toISOString()];
+    }
+    case "[object RegExp]": {
+      return [PROP_TYPE$1.RegExp, value.source];
+    }
+    case "[object Map]": {
+      return [
+        PROP_TYPE$1.Map,
+        JSON.stringify(serializeArray$1(Array.from(value), metadata, parents))
+      ];
+    }
+    case "[object Set]": {
+      return [
+        PROP_TYPE$1.Set,
+        JSON.stringify(serializeArray$1(Array.from(value), metadata, parents))
+      ];
+    }
+    case "[object BigInt]": {
+      return [PROP_TYPE$1.BigInt, value.toString()];
+    }
+    case "[object URL]": {
+      return [PROP_TYPE$1.URL, value.toString()];
+    }
+    case "[object Array]": {
+      return [PROP_TYPE$1.JSON, JSON.stringify(serializeArray$1(value, metadata, parents))];
+    }
+    default: {
+      if (value !== null && typeof value === "object") {
+        return [PROP_TYPE$1.Value, serializeObject$1(value, metadata, parents)];
+      } else {
+        return [PROP_TYPE$1.Value, value];
+      }
+    }
+  }
+}
+function serializeProps$1(props, metadata) {
+  const serialized = JSON.stringify(serializeObject$1(props, metadata));
+  return serialized;
+}
+
+function serializeListValue$1(value) {
+  const hash = {};
+  push(value);
+  return Object.keys(hash).join(" ");
+  function push(item) {
+    if (item && typeof item.forEach === "function")
+      item.forEach(push);
+    else if (item === Object(item))
+      Object.keys(item).forEach((name) => {
+        if (item[name])
+          push(name);
+      });
+    else {
+      item = item === false || item == null ? "" : String(item).trim();
+      if (item) {
+        item.split(/\s+/).forEach((name) => {
+          hash[name] = true;
+        });
+      }
+    }
+  }
+}
+
+const HydrationDirectivesRaw$1 = ["load", "idle", "media", "visible", "only"];
+const HydrationDirectives$1 = new Set(HydrationDirectivesRaw$1);
+const HydrationDirectiveProps$1 = new Set(HydrationDirectivesRaw$1.map((n) => `client:${n}`));
+function extractDirectives$1(inputProps) {
+  let extracted = {
+    isPage: false,
+    hydration: null,
+    props: {}
+  };
+  for (const [key, value] of Object.entries(inputProps)) {
+    if (key.startsWith("server:")) {
+      if (key === "server:root") {
+        extracted.isPage = true;
+      }
+    }
+    if (key.startsWith("client:")) {
+      if (!extracted.hydration) {
+        extracted.hydration = {
+          directive: "",
+          value: "",
+          componentUrl: "",
+          componentExport: { value: "" }
+        };
+      }
+      switch (key) {
+        case "client:component-path": {
+          extracted.hydration.componentUrl = value;
+          break;
+        }
+        case "client:component-export": {
+          extracted.hydration.componentExport.value = value;
+          break;
+        }
+        case "client:component-hydration": {
+          break;
+        }
+        case "client:display-name": {
+          break;
+        }
+        default: {
+          extracted.hydration.directive = key.split(":")[1];
+          extracted.hydration.value = value;
+          if (!HydrationDirectives$1.has(extracted.hydration.directive)) {
+            throw new Error(
+              `Error: invalid hydration directive "${key}". Supported hydration methods: ${Array.from(
+                HydrationDirectiveProps$1
+              ).join(", ")}`
+            );
+          }
+          if (extracted.hydration.directive === "media" && typeof extracted.hydration.value !== "string") {
+            throw new Error(
+              'Error: Media query must be provided for "client:media", similar to client:media="(max-width: 600px)"'
+            );
+          }
+          break;
+        }
+      }
+    } else if (key === "class:list") {
+      extracted.props[key.slice(0, -5)] = serializeListValue$1(value);
+    } else {
+      extracted.props[key] = value;
+    }
+  }
+  return extracted;
+}
+async function generateHydrateScript$1(scriptOptions, metadata) {
+  const { renderer, result, astroId, props, attrs } = scriptOptions;
+  const { hydrate, componentUrl, componentExport } = metadata;
+  if (!componentExport.value) {
+    throw new Error(
+      `Unable to resolve a valid export for "${metadata.displayName}"! Please open an issue at https://astro.build/issues!`
+    );
+  }
+  const island = {
+    children: "",
+    props: {
+      uid: astroId
+    }
+  };
+  if (attrs) {
+    for (const [key, value] of Object.entries(attrs)) {
+      island.props[key] = value;
+    }
+  }
+  island.props["component-url"] = await result.resolve(decodeURI(componentUrl));
+  if (renderer.clientEntrypoint) {
+    island.props["component-export"] = componentExport.value;
+    island.props["renderer-url"] = await result.resolve(decodeURI(renderer.clientEntrypoint));
+    island.props["props"] = escapeHTML$1(serializeProps$1(props, metadata));
+  }
+  island.props["ssr"] = "";
+  island.props["client"] = hydrate;
+  island.props["before-hydration-url"] = await result.resolve("astro:scripts/before-hydration.js");
+  island.props["opts"] = escapeHTML$1(
+    JSON.stringify({
+      name: metadata.displayName,
+      value: metadata.hydrateArgs || ""
+    })
+  );
+  return island;
+}
+
+var idle_prebuilt_default$1 = `(self.Astro=self.Astro||{}).idle=t=>{const e=async()=>{await(await t())()};"requestIdleCallback"in window?window.requestIdleCallback(e):setTimeout(e,200)},window.dispatchEvent(new Event("astro:idle"));`;
+
+var load_prebuilt_default$1 = `(self.Astro=self.Astro||{}).load=a=>{(async()=>await(await a())())()},window.dispatchEvent(new Event("astro:load"));`;
+
+var media_prebuilt_default$1 = `(self.Astro=self.Astro||{}).media=(s,a)=>{const t=async()=>{await(await s())()};if(a.value){const e=matchMedia(a.value);e.matches?t():e.addEventListener("change",t,{once:!0})}},window.dispatchEvent(new Event("astro:media"));`;
+
+var only_prebuilt_default$1 = `(self.Astro=self.Astro||{}).only=t=>{(async()=>await(await t())())()},window.dispatchEvent(new Event("astro:only"));`;
+
+var visible_prebuilt_default$1 = `(self.Astro=self.Astro||{}).visible=(s,c,n)=>{const r=async()=>{await(await s())()};let i=new IntersectionObserver(e=>{for(const t of e)if(!!t.isIntersecting){i.disconnect(),r();break}});for(let e=0;e<n.children.length;e++){const t=n.children[e];i.observe(t)}},window.dispatchEvent(new Event("astro:visible"));`;
+
+var astro_island_prebuilt_default$1 = `var l;{const c={0:t=>t,1:t=>JSON.parse(t,o),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(JSON.parse(t,o)),5:t=>new Set(JSON.parse(t,o)),6:t=>BigInt(t),7:t=>new URL(t)},o=(t,i)=>{if(t===""||!Array.isArray(i))return i;const[e,n]=i;return e in c?c[e](n):void 0};customElements.get("astro-island")||customElements.define("astro-island",(l=class extends HTMLElement{constructor(){super(...arguments);this.hydrate=()=>{if(!this.hydrator||this.parentElement&&this.parentElement.closest("astro-island[ssr]"))return;const i=this.querySelectorAll("astro-slot"),e={},n=this.querySelectorAll("template[data-astro-template]");for(const s of n){const r=s.closest(this.tagName);!r||!r.isSameNode(this)||(e[s.getAttribute("data-astro-template")||"default"]=s.innerHTML,s.remove())}for(const s of i){const r=s.closest(this.tagName);!r||!r.isSameNode(this)||(e[s.getAttribute("name")||"default"]=s.innerHTML)}const a=this.hasAttribute("props")?JSON.parse(this.getAttribute("props"),o):{};this.hydrator(this)(this.Component,a,e,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),window.removeEventListener("astro:hydrate",this.hydrate),window.dispatchEvent(new CustomEvent("astro:hydrate"))}}connectedCallback(){!this.hasAttribute("await-children")||this.firstChild?this.childrenConnectedCallback():new MutationObserver((i,e)=>{e.disconnect(),this.childrenConnectedCallback()}).observe(this,{childList:!0})}async childrenConnectedCallback(){window.addEventListener("astro:hydrate",this.hydrate),await import(this.getAttribute("before-hydration-url")),this.start()}start(){const i=JSON.parse(this.getAttribute("opts")),e=this.getAttribute("client");if(Astro[e]===void 0){window.addEventListener(\`astro:\${e}\`,()=>this.start(),{once:!0});return}Astro[e](async()=>{const n=this.getAttribute("renderer-url"),[a,{default:s}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),r=this.getAttribute("component-export")||"default";if(!r.includes("."))this.Component=a[r];else{this.Component=a;for(const d of r.split("."))this.Component=this.Component[d]}return this.hydrator=s,this.hydrate},i,this)}attributeChangedCallback(){this.hydrator&&this.hydrate()}},l.observedAttributes=["props"],l))}`;
+
+function determineIfNeedsHydrationScript$1(result) {
+  if (result._metadata.hasHydrationScript) {
+    return false;
+  }
+  return result._metadata.hasHydrationScript = true;
+}
+const hydrationScripts$1 = {
+  idle: idle_prebuilt_default$1,
+  load: load_prebuilt_default$1,
+  only: only_prebuilt_default$1,
+  media: media_prebuilt_default$1,
+  visible: visible_prebuilt_default$1
+};
+function determinesIfNeedsDirectiveScript$1(result, directive) {
+  if (result._metadata.hasDirectives.has(directive)) {
+    return false;
+  }
+  result._metadata.hasDirectives.add(directive);
+  return true;
+}
+function getDirectiveScriptText$1(directive) {
+  if (!(directive in hydrationScripts$1)) {
+    throw new Error(`Unknown directive: ${directive}`);
+  }
+  const directiveScriptText = hydrationScripts$1[directive];
+  return directiveScriptText;
+}
+function getPrescripts$1(type, directive) {
+  switch (type) {
+    case "both":
+      return `<style>astro-island,astro-slot{display:contents}</style><script>${getDirectiveScriptText$1(directive) + astro_island_prebuilt_default$1}<\/script>`;
+    case "directive":
+      return `<script>${getDirectiveScriptText$1(directive)}<\/script>`;
+  }
+  return "";
+}
+
+const Fragment$1 = Symbol.for("astro:fragment");
+const Renderer$1 = Symbol.for("astro:renderer");
+function stringifyChunk$1(result, chunk) {
+  switch (chunk.type) {
+    case "directive": {
+      const { hydration } = chunk;
+      let needsHydrationScript = hydration && determineIfNeedsHydrationScript$1(result);
+      let needsDirectiveScript = hydration && determinesIfNeedsDirectiveScript$1(result, hydration.directive);
+      let prescriptType = needsHydrationScript ? "both" : needsDirectiveScript ? "directive" : null;
+      if (prescriptType) {
+        let prescripts = getPrescripts$1(prescriptType, hydration.directive);
+        return markHTMLString$1(prescripts);
+      } else {
+        return "";
+      }
+    }
+    default: {
+      return chunk.toString();
+    }
+  }
+}
+
+function validateComponentProps$1(props, displayName) {
+  var _a;
+  if (((_a = (Object.assign({"BASE_URL":"/portfolio/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,}))) == null ? void 0 : _a.DEV) && props != null) {
+    for (const prop of Object.keys(props)) {
+      if (HydrationDirectiveProps$1.has(prop)) {
+        console.warn(
+          `You are attempting to render <${displayName} ${prop} />, but ${displayName} is an Astro component. Astro components do not render in the client and should not have a hydration directive. Please use a framework component for client rendering.`
+        );
+      }
+    }
+  }
+}
+class AstroComponent$1 {
+  constructor(htmlParts, expressions) {
+    this.htmlParts = htmlParts;
+    this.expressions = expressions;
+  }
+  get [Symbol.toStringTag]() {
+    return "AstroComponent";
+  }
+  async *[Symbol.asyncIterator]() {
+    const { htmlParts, expressions } = this;
+    for (let i = 0; i < htmlParts.length; i++) {
+      const html = htmlParts[i];
+      const expression = expressions[i];
+      yield markHTMLString$1(html);
+      yield* renderChild$1(expression);
+    }
+  }
+}
+function isAstroComponent$1(obj) {
+  return typeof obj === "object" && Object.prototype.toString.call(obj) === "[object AstroComponent]";
+}
+function isAstroComponentFactory$1(obj) {
+  return obj == null ? false : !!obj.isAstroComponentFactory;
+}
+async function* renderAstroComponent$1(component) {
+  for await (const value of component) {
+    if (value || value === 0) {
+      for await (const chunk of renderChild$1(value)) {
+        switch (chunk.type) {
+          case "directive": {
+            yield chunk;
+            break;
+          }
+          default: {
+            yield markHTMLString$1(chunk);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+async function renderToString(result, componentFactory, props, children) {
+  const Component = await componentFactory(result, props, children);
+  if (!isAstroComponent$1(Component)) {
+    const response = Component;
+    throw response;
+  }
+  let html = "";
+  for await (const chunk of renderAstroComponent$1(Component)) {
+    html += stringifyChunk$1(result, chunk);
+  }
+  return html;
+}
+async function renderToIterable$1(result, componentFactory, displayName, props, children) {
+  validateComponentProps$1(props, displayName);
+  const Component = await componentFactory(result, props, children);
+  if (!isAstroComponent$1(Component)) {
+    console.warn(
+      `Returning a Response is only supported inside of page components. Consider refactoring this logic into something like a function that can be used in the page.`
+    );
+    const response = Component;
+    throw response;
+  }
+  return renderAstroComponent$1(Component);
+}
+async function renderTemplate$1(htmlParts, ...expressions) {
+  return new AstroComponent$1(htmlParts, expressions);
+}
+
+async function* renderChild$1(child) {
+  child = await child;
+  if (child instanceof HTMLString$1) {
+    yield child;
+  } else if (Array.isArray(child)) {
+    for (const value of child) {
+      yield markHTMLString$1(await renderChild$1(value));
+    }
+  } else if (typeof child === "function") {
+    yield* renderChild$1(child());
+  } else if (typeof child === "string") {
+    yield markHTMLString$1(escapeHTML$1(child));
+  } else if (!child && child !== 0) ; else if (child instanceof AstroComponent$1 || Object.prototype.toString.call(child) === "[object AstroComponent]") {
+    yield* renderAstroComponent$1(child);
+  } else if (typeof child === "object" && Symbol.asyncIterator in child) {
+    yield* child;
+  } else {
+    yield child;
+  }
+}
+async function renderSlot$1(result, slotted, fallback) {
+  if (slotted) {
+    let iterator = renderChild$1(slotted);
+    let content = "";
+    for await (const chunk of iterator) {
+      if (chunk.type === "directive") {
+        content += stringifyChunk$1(result, chunk);
+      } else {
+        content += chunk;
+      }
+    }
+    return markHTMLString$1(content);
+  }
+  return fallback;
+}
+
+/**
+ * shortdash - https://github.com/bibig/node-shorthash
+ *
+ * @license
+ *
+ * (The MIT License)
+ *
+ * Copyright (c) 2013 Bibig <bibig@me.com>
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+const dictionary$1 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY";
+const binary$1 = dictionary$1.length;
+function bitwise$1(str) {
+  let hash = 0;
+  if (str.length === 0)
+    return hash;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    hash = (hash << 5) - hash + ch;
+    hash = hash & hash;
+  }
+  return hash;
+}
+function shorthash$1(text) {
+  let num;
+  let result = "";
+  let integer = bitwise$1(text);
+  const sign = integer < 0 ? "Z" : "";
+  integer = Math.abs(integer);
+  while (integer >= binary$1) {
+    num = integer % binary$1;
+    integer = Math.floor(integer / binary$1);
+    result = dictionary$1[num] + result;
+  }
+  if (integer > 0) {
+    result = dictionary$1[integer] + result;
+  }
+  return sign + result;
+}
+
+const voidElementNames$1 = /^(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
+const htmlBooleanAttributes$1 = /^(allowfullscreen|async|autofocus|autoplay|controls|default|defer|disabled|disablepictureinpicture|disableremoteplayback|formnovalidate|hidden|loop|nomodule|novalidate|open|playsinline|readonly|required|reversed|scoped|seamless|itemscope)$/i;
+const htmlEnumAttributes$1 = /^(contenteditable|draggable|spellcheck|value)$/i;
+const svgEnumAttributes$1 = /^(autoReverse|externalResourcesRequired|focusable|preserveAlpha)$/i;
+const STATIC_DIRECTIVES$1 = /* @__PURE__ */ new Set(["set:html", "set:text"]);
+const toIdent$1 = (k) => k.trim().replace(/(?:(?<!^)\b\w|\s+|[^\w]+)/g, (match, index) => {
+  if (/[^\w]|\s/.test(match))
+    return "";
+  return index === 0 ? match : match.toUpperCase();
+});
+const toAttributeString$1 = (value, shouldEscape = true) => shouldEscape ? String(value).replace(/&/g, "&#38;").replace(/"/g, "&#34;") : value;
+const kebab$1 = (k) => k.toLowerCase() === k ? k : k.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+const toStyleString$1 = (obj) => Object.entries(obj).map(([k, v]) => `${kebab$1(k)}:${v}`).join(";");
+function defineScriptVars$1(vars) {
+  let output = "";
+  for (const [key, value] of Object.entries(vars)) {
+    output += `let ${toIdent$1(key)} = ${JSON.stringify(value)};
+`;
+  }
+  return markHTMLString$1(output);
+}
+function formatList$1(values) {
+  if (values.length === 1) {
+    return values[0];
+  }
+  return `${values.slice(0, -1).join(", ")} or ${values[values.length - 1]}`;
+}
+function addAttribute$1(value, key, shouldEscape = true) {
+  if (value == null) {
+    return "";
+  }
+  if (value === false) {
+    if (htmlEnumAttributes$1.test(key) || svgEnumAttributes$1.test(key)) {
+      return markHTMLString$1(` ${key}="false"`);
+    }
+    return "";
+  }
+  if (STATIC_DIRECTIVES$1.has(key)) {
+    console.warn(`[astro] The "${key}" directive cannot be applied dynamically at runtime. It will not be rendered as an attribute.
+
+Make sure to use the static attribute syntax (\`${key}={value}\`) instead of the dynamic spread syntax (\`{...{ "${key}": value }}\`).`);
+    return "";
+  }
+  if (key === "class:list") {
+    const listValue = toAttributeString$1(serializeListValue$1(value));
+    if (listValue === "") {
+      return "";
+    }
+    return markHTMLString$1(` ${key.slice(0, -5)}="${listValue}"`);
+  }
+  if (key === "style" && !(value instanceof HTMLString$1) && typeof value === "object") {
+    return markHTMLString$1(` ${key}="${toStyleString$1(value)}"`);
+  }
+  if (key === "className") {
+    return markHTMLString$1(` class="${toAttributeString$1(value, shouldEscape)}"`);
+  }
+  if (value === true && (key.startsWith("data-") || htmlBooleanAttributes$1.test(key))) {
+    return markHTMLString$1(` ${key}`);
+  } else {
+    return markHTMLString$1(` ${key}="${toAttributeString$1(value, shouldEscape)}"`);
+  }
+}
+function internalSpreadAttributes$1(values, shouldEscape = true) {
+  let output = "";
+  for (const [key, value] of Object.entries(values)) {
+    output += addAttribute$1(value, key, shouldEscape);
+  }
+  return markHTMLString$1(output);
+}
+function renderElement$2(name, { props: _props, children = "" }, shouldEscape = true) {
+  const { lang: _, "data-astro-id": astroId, "define:vars": defineVars, ...props } = _props;
+  if (defineVars) {
+    if (name === "style") {
+      delete props["is:global"];
+      delete props["is:scoped"];
+    }
+    if (name === "script") {
+      delete props.hoist;
+      children = defineScriptVars$1(defineVars) + "\n" + children;
+    }
+  }
+  if ((children == null || children == "") && voidElementNames$1.test(name)) {
+    return `<${name}${internalSpreadAttributes$1(props, shouldEscape)} />`;
+  }
+  return `<${name}${internalSpreadAttributes$1(props, shouldEscape)}>${children}</${name}>`;
+}
+
+function componentIsHTMLElement$1(Component) {
+  return typeof HTMLElement !== "undefined" && HTMLElement.isPrototypeOf(Component);
+}
+async function renderHTMLElement$1(result, constructor, props, slots) {
+  const name = getHTMLElementName$1(constructor);
+  let attrHTML = "";
+  for (const attr in props) {
+    attrHTML += ` ${attr}="${toAttributeString$1(await props[attr])}"`;
+  }
+  return markHTMLString$1(
+    `<${name}${attrHTML}>${await renderSlot$1(result, slots == null ? void 0 : slots.default)}</${name}>`
+  );
+}
+function getHTMLElementName$1(constructor) {
+  const definedName = customElements.getName(constructor);
+  if (definedName)
+    return definedName;
+  const assignedName = constructor.name.replace(/^HTML|Element$/g, "").replace(/[A-Z]/g, "-$&").toLowerCase().replace(/^-/, "html-");
+  return assignedName;
+}
+
+const rendererAliases$1 = /* @__PURE__ */ new Map([["solid", "solid-js"]]);
+function guessRenderers$1(componentUrl) {
+  const extname = componentUrl == null ? void 0 : componentUrl.split(".").pop();
+  switch (extname) {
+    case "svelte":
+      return ["@astrojs/svelte"];
+    case "vue":
+      return ["@astrojs/vue"];
+    case "jsx":
+    case "tsx":
+      return ["@astrojs/react", "@astrojs/preact"];
+    default:
+      return ["@astrojs/react", "@astrojs/preact", "@astrojs/vue", "@astrojs/svelte"];
+  }
+}
+function getComponentType$1(Component) {
+  if (Component === Fragment$1) {
+    return "fragment";
+  }
+  if (Component && typeof Component === "object" && Component["astro:html"]) {
+    return "html";
+  }
+  if (isAstroComponentFactory$1(Component)) {
+    return "astro-factory";
+  }
+  return "unknown";
+}
+async function renderComponent$1(result, displayName, Component, _props, slots = {}) {
+  var _a;
+  Component = await Component;
+  switch (getComponentType$1(Component)) {
+    case "fragment": {
+      const children2 = await renderSlot$1(result, slots == null ? void 0 : slots.default);
+      if (children2 == null) {
+        return children2;
+      }
+      return markHTMLString$1(children2);
+    }
+    case "html": {
+      const children2 = {};
+      if (slots) {
+        await Promise.all(
+          Object.entries(slots).map(
+            ([key, value]) => renderSlot$1(result, value).then((output) => {
+              children2[key] = output;
+            })
+          )
+        );
+      }
+      const html2 = Component.render({ slots: children2 });
+      return markHTMLString$1(html2);
+    }
+    case "astro-factory": {
+      async function* renderAstroComponentInline() {
+        let iterable = await renderToIterable$1(result, Component, displayName, _props, slots);
+        yield* iterable;
+      }
+      return renderAstroComponentInline();
+    }
+  }
+  if (!Component && !_props["client:only"]) {
+    throw new Error(
+      `Unable to render ${displayName} because it is ${Component}!
+Did you forget to import the component or is it possible there is a typo?`
+    );
+  }
+  const { renderers } = result._metadata;
+  const metadata = { displayName };
+  const { hydration, isPage, props } = extractDirectives$1(_props);
+  let html = "";
+  let attrs = void 0;
+  if (hydration) {
+    metadata.hydrate = hydration.directive;
+    metadata.hydrateArgs = hydration.value;
+    metadata.componentExport = hydration.componentExport;
+    metadata.componentUrl = hydration.componentUrl;
+  }
+  const probableRendererNames = guessRenderers$1(metadata.componentUrl);
+  if (Array.isArray(renderers) && renderers.length === 0 && typeof Component !== "string" && !componentIsHTMLElement$1(Component)) {
+    const message = `Unable to render ${metadata.displayName}!
+
+There are no \`integrations\` set in your \`astro.config.mjs\` file.
+Did you mean to add ${formatList$1(probableRendererNames.map((r) => "`" + r + "`"))}?`;
+    throw new Error(message);
+  }
+  const children = {};
+  if (slots) {
+    await Promise.all(
+      Object.entries(slots).map(
+        ([key, value]) => renderSlot$1(result, value).then((output) => {
+          children[key] = output;
+        })
+      )
+    );
+  }
+  let renderer;
+  if (metadata.hydrate !== "only") {
+    if (Component && Component[Renderer$1]) {
+      const rendererName = Component[Renderer$1];
+      renderer = renderers.find(({ name }) => name === rendererName);
+    }
+    if (!renderer) {
+      let error;
+      for (const r of renderers) {
+        try {
+          if (await r.ssr.check.call({ result }, Component, props, children)) {
+            renderer = r;
+            break;
+          }
+        } catch (e) {
+          error ?? (error = e);
+        }
+      }
+      if (!renderer && error) {
+        throw error;
+      }
+    }
+    if (!renderer && typeof HTMLElement === "function" && componentIsHTMLElement$1(Component)) {
+      const output = renderHTMLElement$1(result, Component, _props, slots);
+      return output;
+    }
+  } else {
+    if (metadata.hydrateArgs) {
+      const passedName = metadata.hydrateArgs;
+      const rendererName = rendererAliases$1.has(passedName) ? rendererAliases$1.get(passedName) : passedName;
+      renderer = renderers.find(
+        ({ name }) => name === `@astrojs/${rendererName}` || name === rendererName
+      );
+    }
+    if (!renderer && renderers.length === 1) {
+      renderer = renderers[0];
+    }
+    if (!renderer) {
+      const extname = (_a = metadata.componentUrl) == null ? void 0 : _a.split(".").pop();
+      renderer = renderers.filter(
+        ({ name }) => name === `@astrojs/${extname}` || name === extname
+      )[0];
+    }
+  }
+  if (!renderer) {
+    if (metadata.hydrate === "only") {
+      throw new Error(`Unable to render ${metadata.displayName}!
+
+Using the \`client:only\` hydration strategy, Astro needs a hint to use the correct renderer.
+Did you mean to pass <${metadata.displayName} client:only="${probableRendererNames.map((r) => r.replace("@astrojs/", "")).join("|")}" />
+`);
+    } else if (typeof Component !== "string") {
+      const matchingRenderers = renderers.filter((r) => probableRendererNames.includes(r.name));
+      const plural = renderers.length > 1;
+      if (matchingRenderers.length === 0) {
+        throw new Error(`Unable to render ${metadata.displayName}!
+
+There ${plural ? "are" : "is"} ${renderers.length} renderer${plural ? "s" : ""} configured in your \`astro.config.mjs\` file,
+but ${plural ? "none were" : "it was not"} able to server-side render ${metadata.displayName}.
+
+Did you mean to enable ${formatList$1(probableRendererNames.map((r) => "`" + r + "`"))}?`);
+      } else if (matchingRenderers.length === 1) {
+        renderer = matchingRenderers[0];
+        ({ html, attrs } = await renderer.ssr.renderToStaticMarkup.call(
+          { result },
+          Component,
+          props,
+          children,
+          metadata
+        ));
+      } else {
+        throw new Error(`Unable to render ${metadata.displayName}!
+
+This component likely uses ${formatList$1(probableRendererNames)},
+but Astro encountered an error during server-side rendering.
+
+Please ensure that ${metadata.displayName}:
+1. Does not unconditionally access browser-specific globals like \`window\` or \`document\`.
+   If this is unavoidable, use the \`client:only\` hydration directive.
+2. Does not conditionally return \`null\` or \`undefined\` when rendered on the server.
+
+If you're still stuck, please open an issue on GitHub or join us at https://astro.build/chat.`);
+      }
+    }
+  } else {
+    if (metadata.hydrate === "only") {
+      html = await renderSlot$1(result, slots == null ? void 0 : slots.fallback);
+    } else {
+      ({ html, attrs } = await renderer.ssr.renderToStaticMarkup.call(
+        { result },
+        Component,
+        props,
+        children,
+        metadata
+      ));
+    }
+  }
+  if (renderer && !renderer.clientEntrypoint && renderer.name !== "@astrojs/lit" && metadata.hydrate) {
+    throw new Error(
+      `${metadata.displayName} component has a \`client:${metadata.hydrate}\` directive, but no client entrypoint was provided by ${renderer.name}!`
+    );
+  }
+  if (!html && typeof Component === "string") {
+    const childSlots = Object.values(children).join("");
+    const iterable = renderAstroComponent$1(
+      await renderTemplate$1`<${Component}${internalSpreadAttributes$1(props)}${markHTMLString$1(
+        childSlots === "" && voidElementNames$1.test(Component) ? `/>` : `>${childSlots}</${Component}>`
+      )}`
+    );
+    html = "";
+    for await (const chunk of iterable) {
+      html += chunk;
+    }
+  }
+  if (!hydration) {
+    if (isPage || (renderer == null ? void 0 : renderer.name) === "astro:jsx") {
+      return html;
+    }
+    return markHTMLString$1(html.replace(/\<\/?astro-slot\>/g, ""));
+  }
+  const astroId = shorthash$1(
+    `<!--${metadata.componentExport.value}:${metadata.componentUrl}-->
+${html}
+${serializeProps$1(
+      props,
+      metadata
+    )}`
+  );
+  const island = await generateHydrateScript$1(
+    { renderer, result, astroId, props, attrs },
+    metadata
+  );
+  let unrenderedSlots = [];
+  if (html) {
+    if (Object.keys(children).length > 0) {
+      for (const key of Object.keys(children)) {
+        if (!html.includes(key === "default" ? `<astro-slot>` : `<astro-slot name="${key}">`)) {
+          unrenderedSlots.push(key);
+        }
+      }
+    }
+  } else {
+    unrenderedSlots = Object.keys(children);
+  }
+  const template = unrenderedSlots.length > 0 ? unrenderedSlots.map(
+    (key) => `<template data-astro-template${key !== "default" ? `="${key}"` : ""}>${children[key]}</template>`
+  ).join("") : "";
+  island.children = `${html ?? ""}${template}`;
+  if (island.children) {
+    island.props["await-children"] = "";
+  }
+  async function* renderAll() {
+    yield { type: "directive", hydration, result };
+    yield markHTMLString$1(renderElement$2("astro-island", island, false));
+  }
+  return renderAll();
+}
+
+typeof process === "object" && Object.prototype.toString.call(process) === "[object process]";
+
+new TextEncoder();
+
+function spreadAttributes$1(values, _name, { class: scopedClassName } = {}) {
+  let output = "";
+  if (scopedClassName) {
+    if (typeof values.class !== "undefined") {
+      values.class += ` ${scopedClassName}`;
+    } else if (typeof values["class:list"] !== "undefined") {
+      values["class:list"] = [values["class:list"], scopedClassName];
+    } else {
+      values.class = scopedClassName;
+    }
+  }
+  for (const [key, value] of Object.entries(values)) {
+    output += addAttribute$1(value, key, true);
+  }
+  return markHTMLString$1(output);
+}
+
+const AstroJSX = "astro:jsx";
+const Empty = Symbol("empty");
+const toSlotName = (str) => str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+function isVNode(vnode) {
+  return vnode && typeof vnode === "object" && vnode[AstroJSX];
+}
+function transformSlots(vnode) {
+  if (typeof vnode.type === "string")
+    return vnode;
+  const slots = {};
+  if (isVNode(vnode.props.children)) {
+    const child = vnode.props.children;
+    if (!isVNode(child))
+      return;
+    if (!("slot" in child.props))
+      return;
+    const name = toSlotName(child.props.slot);
+    slots[name] = [child];
+    slots[name]["$$slot"] = true;
+    delete child.props.slot;
+    delete vnode.props.children;
+  }
+  if (Array.isArray(vnode.props.children)) {
+    vnode.props.children = vnode.props.children.map((child) => {
+      if (!isVNode(child))
+        return child;
+      if (!("slot" in child.props))
+        return child;
+      const name = toSlotName(child.props.slot);
+      if (Array.isArray(slots[name])) {
+        slots[name].push(child);
+      } else {
+        slots[name] = [child];
+        slots[name]["$$slot"] = true;
+      }
+      delete child.props.slot;
+      return Empty;
+    }).filter((v) => v !== Empty);
+  }
+  Object.assign(vnode.props, slots);
+}
+function markRawChildren(child) {
+  if (typeof child === "string")
+    return markHTMLString$1(child);
+  if (Array.isArray(child))
+    return child.map((c) => markRawChildren(c));
+  return child;
+}
+function transformSetDirectives(vnode) {
+  if (!("set:html" in vnode.props || "set:text" in vnode.props))
+    return;
+  if ("set:html" in vnode.props) {
+    const children = markRawChildren(vnode.props["set:html"]);
+    delete vnode.props["set:html"];
+    Object.assign(vnode.props, { children });
+    return;
+  }
+  if ("set:text" in vnode.props) {
+    const children = vnode.props["set:text"];
+    delete vnode.props["set:text"];
+    Object.assign(vnode.props, { children });
+    return;
+  }
+}
+function createVNode(type, props) {
+  const vnode = {
+    [AstroJSX]: true,
+    type,
+    props: props ?? {}
+  };
+  transformSetDirectives(vnode);
+  transformSlots(vnode);
+  return vnode;
+}
+
+const ClientOnlyPlaceholder = "astro-client-only";
+const skipAstroJSXCheck = /* @__PURE__ */ new WeakSet();
+let originalConsoleError;
+let consoleFilterRefs = 0;
+async function renderJSX(result, vnode) {
+  switch (true) {
+    case vnode instanceof HTMLString$1:
+      if (vnode.toString().trim() === "") {
+        return "";
+      }
+      return vnode;
+    case typeof vnode === "string":
+      return markHTMLString$1(escapeHTML$1(vnode));
+    case (!vnode && vnode !== 0):
+      return "";
+    case Array.isArray(vnode):
+      return markHTMLString$1(
+        (await Promise.all(vnode.map((v) => renderJSX(result, v)))).join("")
+      );
+  }
+  if (isVNode(vnode)) {
+    switch (true) {
+      case vnode.type === Symbol.for("astro:fragment"):
+        return renderJSX(result, vnode.props.children);
+      case vnode.type.isAstroComponentFactory: {
+        let props = {};
+        let slots = {};
+        for (const [key, value] of Object.entries(vnode.props ?? {})) {
+          if (key === "children" || value && typeof value === "object" && value["$$slot"]) {
+            slots[key === "children" ? "default" : key] = () => renderJSX(result, value);
+          } else {
+            props[key] = value;
+          }
+        }
+        return markHTMLString$1(await renderToString(result, vnode.type, props, slots));
+      }
+      case (!vnode.type && vnode.type !== 0):
+        return "";
+      case (typeof vnode.type === "string" && vnode.type !== ClientOnlyPlaceholder):
+        return markHTMLString$1(await renderElement$1(result, vnode.type, vnode.props ?? {}));
+    }
+    if (vnode.type) {
+      let extractSlots2 = function(child) {
+        if (Array.isArray(child)) {
+          return child.map((c) => extractSlots2(c));
+        }
+        if (!isVNode(child)) {
+          _slots.default.push(child);
+          return;
+        }
+        if ("slot" in child.props) {
+          _slots[child.props.slot] = [..._slots[child.props.slot] ?? [], child];
+          delete child.props.slot;
+          return;
+        }
+        _slots.default.push(child);
+      };
+      if (typeof vnode.type === "function" && vnode.type["astro:renderer"]) {
+        skipAstroJSXCheck.add(vnode.type);
+      }
+      if (typeof vnode.type === "function" && vnode.props["server:root"]) {
+        const output2 = await vnode.type(vnode.props ?? {});
+        return await renderJSX(result, output2);
+      }
+      if (typeof vnode.type === "function" && !skipAstroJSXCheck.has(vnode.type)) {
+        useConsoleFilter();
+        try {
+          const output2 = await vnode.type(vnode.props ?? {});
+          if (output2 && output2[AstroJSX]) {
+            return await renderJSX(result, output2);
+          } else if (!output2) {
+            return await renderJSX(result, output2);
+          }
+        } catch (e) {
+          skipAstroJSXCheck.add(vnode.type);
+        } finally {
+          finishUsingConsoleFilter();
+        }
+      }
+      const { children = null, ...props } = vnode.props ?? {};
+      const _slots = {
+        default: []
+      };
+      extractSlots2(children);
+      for (const [key, value] of Object.entries(props)) {
+        if (value["$$slot"]) {
+          _slots[key] = value;
+          delete props[key];
+        }
+      }
+      const slotPromises = [];
+      const slots = {};
+      for (const [key, value] of Object.entries(_slots)) {
+        slotPromises.push(
+          renderJSX(result, value).then((output2) => {
+            if (output2.toString().trim().length === 0)
+              return;
+            slots[key] = () => output2;
+          })
+        );
+      }
+      await Promise.all(slotPromises);
+      let output;
+      if (vnode.type === ClientOnlyPlaceholder && vnode.props["client:only"]) {
+        output = await renderComponent$1(
+          result,
+          vnode.props["client:display-name"] ?? "",
+          null,
+          props,
+          slots
+        );
+      } else {
+        output = await renderComponent$1(
+          result,
+          typeof vnode.type === "function" ? vnode.type.name : vnode.type,
+          vnode.type,
+          props,
+          slots
+        );
+      }
+      if (typeof output !== "string" && Symbol.asyncIterator in output) {
+        let body = "";
+        for await (const chunk of output) {
+          let html = stringifyChunk$1(result, chunk);
+          body += html;
+        }
+        return markHTMLString$1(body);
+      } else {
+        return markHTMLString$1(output);
+      }
+    }
+  }
+  return markHTMLString$1(`${vnode}`);
+}
+async function renderElement$1(result, tag, { children, ...props }) {
+  return markHTMLString$1(
+    `<${tag}${spreadAttributes$1(props)}${markHTMLString$1(
+      (children == null || children == "") && voidElementNames$1.test(tag) ? `/>` : `>${children == null ? "" : await renderJSX(result, children)}</${tag}>`
+    )}`
+  );
+}
+function useConsoleFilter() {
+  consoleFilterRefs++;
+  if (!originalConsoleError) {
+    originalConsoleError = console.error;
+    try {
+      console.error = filteredConsoleError;
+    } catch (error) {
+    }
+  }
+}
+function finishUsingConsoleFilter() {
+  consoleFilterRefs--;
+}
+function filteredConsoleError(msg, ...rest) {
+  if (consoleFilterRefs > 0 && typeof msg === "string") {
+    const isKnownReactHookError = msg.includes("Warning: Invalid hook call.") && msg.includes("https://reactjs.org/link/invalid-hook-call");
+    if (isKnownReactHookError)
+      return;
+  }
+}
+
+const slotName = (str) => str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+async function check(Component, props, { default: children = null, ...slotted } = {}) {
+  if (typeof Component !== "function")
+    return false;
+  const slots = {};
+  for (const [key, value] of Object.entries(slotted)) {
+    const name = slotName(key);
+    slots[name] = value;
+  }
+  try {
+    const result = await Component({ ...props, ...slots, children });
+    return result[AstroJSX];
+  } catch (e) {
+  }
+  return false;
+}
+async function renderToStaticMarkup(Component, props = {}, { default: children = null, ...slotted } = {}) {
+  const slots = {};
+  for (const [key, value] of Object.entries(slotted)) {
+    const name = slotName(key);
+    slots[name] = value;
+  }
+  const { result } = this;
+  const html = await renderJSX(result, createVNode(Component, { ...props, ...slots, children }));
+  return { html };
+}
+var server_default = {
+  check,
+  renderToStaticMarkup
+};
+
+const ASTRO_VERSION = "1.4.4";
 function createDeprecatedFetchContentFn() {
   return () => {
     throw new Error("Deprecated: Astro.fetchContent() has been replaced with Astro.glob().");
@@ -48,7 +1167,17 @@ function createAstro(filePathname, _site, projectRootStr) {
 }
 
 const escapeHTML = escape;
+class HTMLBytes extends Uint8Array {
+}
+Object.defineProperty(HTMLBytes.prototype, Symbol.toStringTag, {
+  get() {
+    return "HTMLBytes";
+  }
+});
 class HTMLString extends String {
+  get [Symbol.toStringTag]() {
+    return "HTMLString";
+  }
 }
 const markHTMLString = (value) => {
   if (value instanceof HTMLString) {
@@ -59,6 +1188,41 @@ const markHTMLString = (value) => {
   }
   return value;
 };
+function isHTMLString(value) {
+  return Object.prototype.toString.call(value) === "[object HTMLString]";
+}
+function markHTMLBytes(bytes) {
+  return new HTMLBytes(bytes);
+}
+async function* unescapeChunksAsync(iterable) {
+  for await (const chunk of iterable) {
+    yield unescapeHTML(chunk);
+  }
+}
+function* unescapeChunks(iterable) {
+  for (const chunk of iterable) {
+    yield unescapeHTML(chunk);
+  }
+}
+function unescapeHTML(str) {
+  if (!!str && typeof str === "object") {
+    if (str instanceof Uint8Array) {
+      return markHTMLBytes(str);
+    } else if (str instanceof Response && str.body) {
+      const body = str.body;
+      return unescapeChunksAsync(body);
+    } else if (typeof str.then === "function") {
+      return Promise.resolve(str).then((value) => {
+        return unescapeHTML(value);
+      });
+    } else if (Symbol.iterator in str) {
+      return unescapeChunks(str);
+    } else if (Symbol.asyncIterator in str) {
+      return unescapeChunksAsync(str);
+    }
+  }
+  return markHTMLString(str);
+}
 
 class Metadata {
   constructor(filePathname, opts) {
@@ -131,7 +1295,10 @@ const PROP_TYPE = {
   Map: 4,
   Set: 5,
   BigInt: 6,
-  URL: 7
+  URL: 7,
+  Uint8Array: 8,
+  Uint16Array: 9,
+  Uint32Array: 10
 };
 function serializeArray(value, metadata = {}, parents = /* @__PURE__ */ new WeakSet()) {
   if (parents.has(value)) {
@@ -190,6 +1357,15 @@ function convertToSerializedForm(value, metadata = {}, parents = /* @__PURE__ */
     }
     case "[object Array]": {
       return [PROP_TYPE.JSON, JSON.stringify(serializeArray(value, metadata, parents))];
+    }
+    case "[object Uint8Array]": {
+      return [PROP_TYPE.Uint8Array, JSON.stringify(Array.from(value))];
+    }
+    case "[object Uint16Array]": {
+      return [PROP_TYPE.Uint16Array, JSON.stringify(Array.from(value))];
+    }
+    case "[object Uint32Array]": {
+      return [PROP_TYPE.Uint32Array, JSON.stringify(Array.from(value))];
     }
     default: {
       if (value !== null && typeof value === "object") {
@@ -286,7 +1462,9 @@ function extractDirectives(inputProps) {
         }
       }
     } else if (key === "class:list") {
-      extracted.props[key.slice(0, -5)] = serializeListValue(value);
+      if (value) {
+        extracted.props[key.slice(0, -5)] = serializeListValue(value);
+      }
     } else {
       extracted.props[key] = value;
     }
@@ -320,7 +1498,10 @@ async function generateHydrateScript(scriptOptions, metadata) {
   }
   island.props["ssr"] = "";
   island.props["client"] = hydrate;
-  island.props["before-hydration-url"] = await result.resolve("astro:scripts/before-hydration.js");
+  let beforeHydrationUrl = await result.resolve("astro:scripts/before-hydration.js");
+  if (beforeHydrationUrl.length) {
+    island.props["before-hydration-url"] = beforeHydrationUrl;
+  }
   island.props["opts"] = escapeHTML(
     JSON.stringify({
       name: metadata.displayName,
@@ -328,6 +1509,80 @@ async function generateHydrateScript(scriptOptions, metadata) {
     })
   );
   return island;
+}
+
+class SlotString extends HTMLString {
+  constructor(content, instructions) {
+    super(content);
+    this.instructions = instructions;
+  }
+}
+async function renderSlot(_result, slotted, fallback) {
+  if (slotted) {
+    let iterator = renderChild(slotted);
+    let content = "";
+    let instructions = null;
+    for await (const chunk of iterator) {
+      if (chunk.type === "directive") {
+        if (instructions === null) {
+          instructions = [];
+        }
+        instructions.push(chunk);
+      } else {
+        content += chunk;
+      }
+    }
+    return markHTMLString(new SlotString(content, instructions));
+  }
+  return fallback;
+}
+async function renderSlots(result, slots = {}) {
+  let slotInstructions = null;
+  let children = {};
+  if (slots) {
+    await Promise.all(
+      Object.entries(slots).map(
+        ([key, value]) => renderSlot(result, value).then((output) => {
+          if (output.instructions) {
+            if (slotInstructions === null) {
+              slotInstructions = [];
+            }
+            slotInstructions.push(...output.instructions);
+          }
+          children[key] = output;
+        })
+      )
+    );
+  }
+  return { slotInstructions, children };
+}
+
+async function* renderChild(child) {
+  child = await child;
+  if (child instanceof SlotString) {
+    if (child.instructions) {
+      yield* child.instructions;
+    }
+    yield child;
+  } else if (isHTMLString(child)) {
+    yield child;
+  } else if (Array.isArray(child)) {
+    for (const value of child) {
+      yield markHTMLString(await renderChild(value));
+    }
+  } else if (typeof child === "function") {
+    yield* renderChild(child());
+  } else if (typeof child === "string") {
+    yield markHTMLString(escapeHTML(child));
+  } else if (!child && child !== 0) ; else if (child instanceof AstroComponent || Object.prototype.toString.call(child) === "[object AstroComponent]") {
+    yield* renderAstroComponent(child);
+  } else if (ArrayBuffer.isView(child)) {
+    yield child;
+  } else if (typeof child === "object" && (Symbol.asyncIterator in child || Symbol.iterator in child)) {
+    yield* child;
+  } else {
+    yield child;
+  }
 }
 
 var idle_prebuilt_default = `(self.Astro=self.Astro||{}).idle=t=>{const e=async()=>{await(await t())()};"requestIdleCallback"in window?window.requestIdleCallback(e):setTimeout(e,200)},window.dispatchEvent(new Event("astro:idle"));`;
@@ -340,7 +1595,7 @@ var only_prebuilt_default = `(self.Astro=self.Astro||{}).only=t=>{(async()=>awai
 
 var visible_prebuilt_default = `(self.Astro=self.Astro||{}).visible=(s,c,n)=>{const r=async()=>{await(await s())()};let i=new IntersectionObserver(e=>{for(const t of e)if(!!t.isIntersecting){i.disconnect(),r();break}});for(let e=0;e<n.children.length;e++){const t=n.children[e];i.observe(t)}},window.dispatchEvent(new Event("astro:visible"));`;
 
-var astro_island_prebuilt_default = `var l;{const c={0:t=>t,1:t=>JSON.parse(t,o),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(JSON.parse(t,o)),5:t=>new Set(JSON.parse(t,o)),6:t=>BigInt(t),7:t=>new URL(t)},o=(t,i)=>{if(t===""||!Array.isArray(i))return i;const[e,n]=i;return e in c?c[e](n):void 0};customElements.get("astro-island")||customElements.define("astro-island",(l=class extends HTMLElement{constructor(){super(...arguments);this.hydrate=()=>{if(!this.hydrator||this.parentElement&&this.parentElement.closest("astro-island[ssr]"))return;const i=this.querySelectorAll("astro-slot"),e={},n=this.querySelectorAll("template[data-astro-template]");for(const s of n){const r=s.closest(this.tagName);!r||!r.isSameNode(this)||(e[s.getAttribute("data-astro-template")||"default"]=s.innerHTML,s.remove())}for(const s of i){const r=s.closest(this.tagName);!r||!r.isSameNode(this)||(e[s.getAttribute("name")||"default"]=s.innerHTML)}const a=this.hasAttribute("props")?JSON.parse(this.getAttribute("props"),o):{};this.hydrator(this)(this.Component,a,e,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),window.removeEventListener("astro:hydrate",this.hydrate),window.dispatchEvent(new CustomEvent("astro:hydrate"))}}connectedCallback(){!this.hasAttribute("await-children")||this.firstChild?this.childrenConnectedCallback():new MutationObserver((i,e)=>{e.disconnect(),this.childrenConnectedCallback()}).observe(this,{childList:!0})}async childrenConnectedCallback(){window.addEventListener("astro:hydrate",this.hydrate),await import(this.getAttribute("before-hydration-url")),this.start()}start(){const i=JSON.parse(this.getAttribute("opts")),e=this.getAttribute("client");if(Astro[e]===void 0){window.addEventListener(\`astro:\${e}\`,()=>this.start(),{once:!0});return}Astro[e](async()=>{const n=this.getAttribute("renderer-url"),[a,{default:s}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),r=this.getAttribute("component-export")||"default";if(!r.includes("."))this.Component=a[r];else{this.Component=a;for(const d of r.split("."))this.Component=this.Component[d]}return this.hydrator=s,this.hydrate},i,this)}attributeChangedCallback(){this.hydrator&&this.hydrate()}},l.observedAttributes=["props"],l))}`;
+var astro_island_prebuilt_default = `var l;{const c={0:t=>t,1:t=>JSON.parse(t,o),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(JSON.parse(t,o)),5:t=>new Set(JSON.parse(t,o)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(JSON.parse(t)),9:t=>new Uint16Array(JSON.parse(t)),10:t=>new Uint32Array(JSON.parse(t))},o=(t,s)=>{if(t===""||!Array.isArray(s))return s;const[e,n]=s;return e in c?c[e](n):void 0};customElements.get("astro-island")||customElements.define("astro-island",(l=class extends HTMLElement{constructor(){super(...arguments);this.hydrate=()=>{if(!this.hydrator||this.parentElement&&this.parentElement.closest("astro-island[ssr]"))return;const s=this.querySelectorAll("astro-slot"),e={},n=this.querySelectorAll("template[data-astro-template]");for(const r of n){const i=r.closest(this.tagName);!i||!i.isSameNode(this)||(e[r.getAttribute("data-astro-template")||"default"]=r.innerHTML,r.remove())}for(const r of s){const i=r.closest(this.tagName);!i||!i.isSameNode(this)||(e[r.getAttribute("name")||"default"]=r.innerHTML)}const a=this.hasAttribute("props")?JSON.parse(this.getAttribute("props"),o):{};this.hydrator(this)(this.Component,a,e,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),window.removeEventListener("astro:hydrate",this.hydrate),window.dispatchEvent(new CustomEvent("astro:hydrate"))}}connectedCallback(){!this.hasAttribute("await-children")||this.firstChild?this.childrenConnectedCallback():new MutationObserver((s,e)=>{e.disconnect(),this.childrenConnectedCallback()}).observe(this,{childList:!0})}async childrenConnectedCallback(){window.addEventListener("astro:hydrate",this.hydrate);let s=this.getAttribute("before-hydration-url");s&&await import(s),this.start()}start(){const s=JSON.parse(this.getAttribute("opts")),e=this.getAttribute("client");if(Astro[e]===void 0){window.addEventListener(\`astro:\${e}\`,()=>this.start(),{once:!0});return}Astro[e](async()=>{const n=this.getAttribute("renderer-url"),[a,{default:r}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),i=this.getAttribute("component-export")||"default";if(!i.includes("."))this.Component=a[i];else{this.Component=a;for(const d of i.split("."))this.Component=this.Component[d]}return this.hydrator=r,this.hydrate},s,this)}attributeChangedCallback(){this.hydrator&&this.hydrate()}},l.observedAttributes=["props"],l))}`;
 
 function determineIfNeedsHydrationScript(result) {
   if (result._metadata.hasHydrationScript) {
@@ -381,6 +1636,8 @@ function getPrescripts(type, directive) {
 
 const Fragment = Symbol.for("astro:fragment");
 const Renderer = Symbol.for("astro:renderer");
+new TextEncoder();
+new TextDecoder();
 function stringifyChunk(result, chunk) {
   switch (chunk.type) {
     case "directive": {
@@ -403,7 +1660,7 @@ function stringifyChunk(result, chunk) {
 
 function validateComponentProps(props, displayName) {
   var _a;
-  if (((_a = (Object.assign({"BASE_URL":"/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,}))) == null ? void 0 : _a.DEV) && props != null) {
+  if (((_a = (Object.assign({"BASE_URL":"/portfolio/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,}))) == null ? void 0 : _a.DEV) && props != null) {
     for (const prop of Object.keys(props)) {
       if (HydrationDirectiveProps.has(prop)) {
         console.warn(
@@ -455,18 +1712,6 @@ async function* renderAstroComponent(component) {
     }
   }
 }
-async function renderToString(result, componentFactory, props, children) {
-  const Component = await componentFactory(result, props, children);
-  if (!isAstroComponent(Component)) {
-    const response = Component;
-    throw response;
-  }
-  let html = "";
-  for await (const chunk of renderAstroComponent(Component)) {
-    html += stringifyChunk(result, chunk);
-  }
-  return html;
-}
 async function renderToIterable(result, componentFactory, displayName, props, children) {
   validateComponentProps(props, displayName);
   const Component = await componentFactory(result, props, children);
@@ -481,42 +1726,6 @@ async function renderToIterable(result, componentFactory, displayName, props, ch
 }
 async function renderTemplate(htmlParts, ...expressions) {
   return new AstroComponent(htmlParts, expressions);
-}
-
-async function* renderChild(child) {
-  child = await child;
-  if (child instanceof HTMLString) {
-    yield child;
-  } else if (Array.isArray(child)) {
-    for (const value of child) {
-      yield markHTMLString(await renderChild(value));
-    }
-  } else if (typeof child === "function") {
-    yield* renderChild(child());
-  } else if (typeof child === "string") {
-    yield markHTMLString(escapeHTML(child));
-  } else if (!child && child !== 0) ; else if (child instanceof AstroComponent || Object.prototype.toString.call(child) === "[object AstroComponent]") {
-    yield* renderAstroComponent(child);
-  } else if (typeof child === "object" && Symbol.asyncIterator in child) {
-    yield* child;
-  } else {
-    yield child;
-  }
-}
-async function renderSlot(result, slotted, fallback) {
-  if (slotted) {
-    let iterator = renderChild(slotted);
-    let content = "";
-    for await (const chunk of iterator) {
-      if (chunk.type === "directive") {
-        content += stringifyChunk(result, chunk);
-      } else {
-        content += chunk;
-      }
-    }
-    return markHTMLString(content);
-  }
-  return fallback;
 }
 
 /**
@@ -584,7 +1793,7 @@ const htmlBooleanAttributes = /^(allowfullscreen|async|autofocus|autoplay|contro
 const htmlEnumAttributes = /^(contenteditable|draggable|spellcheck|value)$/i;
 const svgEnumAttributes = /^(autoReverse|externalResourcesRequired|focusable|preserveAlpha)$/i;
 const STATIC_DIRECTIVES = /* @__PURE__ */ new Set(["set:html", "set:text"]);
-const toIdent = (k) => k.trim().replace(/(?:(?<!^)\b\w|\s+|[^\w]+)/g, (match, index) => {
+const toIdent = (k) => k.trim().replace(/(?:(?!^)\b\w|\s+|[^\w]+)/g, (match, index) => {
   if (/[^\w]|\s/.test(match))
     return "";
   return index === 0 ? match : match.toUpperCase();
@@ -595,7 +1804,7 @@ const toStyleString = (obj) => Object.entries(obj).map(([k, v]) => `${kebab(k)}:
 function defineScriptVars(vars) {
   let output = "";
   for (const [key, value] of Object.entries(vars)) {
-    output += `let ${toIdent(key)} = ${JSON.stringify(value)};
+    output += `const ${toIdent(key)} = ${JSON.stringify(value)};
 `;
   }
   return markHTMLString(output);
@@ -648,7 +1857,7 @@ function internalSpreadAttributes(values, shouldEscape = true) {
   }
   return markHTMLString(output);
 }
-function renderElement$1(name, { props: _props, children = "" }, shouldEscape = true) {
+function renderElement(name, { props: _props, children = "" }, shouldEscape = true) {
   const { lang: _, "data-astro-id": astroId, "define:vars": defineVars, ...props } = _props;
   if (defineVars) {
     if (name === "style") {
@@ -697,7 +1906,7 @@ function guessRenderers(componentUrl) {
       return ["@astrojs/vue"];
     case "jsx":
     case "tsx":
-      return ["@astrojs/react", "@astrojs/preact"];
+      return ["@astrojs/react", "@astrojs/preact", "@astrojs/vue (jsx)"];
     default:
       return ["@astrojs/react", "@astrojs/preact", "@astrojs/vue", "@astrojs/svelte"];
   }
@@ -726,18 +1935,10 @@ async function renderComponent(result, displayName, Component, _props, slots = {
       return markHTMLString(children2);
     }
     case "html": {
-      const children2 = {};
-      if (slots) {
-        await Promise.all(
-          Object.entries(slots).map(
-            ([key, value]) => renderSlot(result, value).then((output) => {
-              children2[key] = output;
-            })
-          )
-        );
-      }
+      const { slotInstructions: slotInstructions2, children: children2 } = await renderSlots(result, slots);
       const html2 = Component.render({ slots: children2 });
-      return markHTMLString(html2);
+      const hydrationHtml = slotInstructions2 ? slotInstructions2.map((instr) => stringifyChunk(result, instr)).join("") : "";
+      return markHTMLString(hydrationHtml + html2);
     }
     case "astro-factory": {
       async function* renderAstroComponentInline() {
@@ -772,16 +1973,7 @@ There are no \`integrations\` set in your \`astro.config.mjs\` file.
 Did you mean to add ${formatList(probableRendererNames.map((r) => "`" + r + "`"))}?`;
     throw new Error(message);
   }
-  const children = {};
-  if (slots) {
-    await Promise.all(
-      Object.entries(slots).map(
-        ([key, value]) => renderSlot(result, value).then((output) => {
-          children[key] = output;
-        })
-      )
-    );
-  }
+  const { children, slotInstructions } = await renderSlots(result, slots);
   let renderer;
   if (metadata.hydrate !== "only") {
     if (Component && Component[Renderer]) {
@@ -934,8 +2126,11 @@ ${serializeProps(
     island.props["await-children"] = "";
   }
   async function* renderAll() {
+    if (slotInstructions) {
+      yield* slotInstructions;
+    }
     yield { type: "directive", hydration, result };
-    yield markHTMLString(renderElement$1("astro-island", island, false));
+    yield markHTMLString(renderElement("astro-island", island, false));
   }
   return renderAll();
 }
@@ -945,27 +2140,24 @@ const uniqueElements = (item, index, all) => {
   const children = item.children;
   return index === all.findIndex((i) => JSON.stringify(i.props) === props && i.children == children);
 };
-const alreadyHeadRenderedResults = /* @__PURE__ */ new WeakSet();
 function renderHead(result) {
-  alreadyHeadRenderedResults.add(result);
-  const styles = Array.from(result.styles).filter(uniqueElements).map((style) => renderElement$1("style", style));
+  result._metadata.hasRenderedHead = true;
+  const styles = Array.from(result.styles).filter(uniqueElements).map((style) => renderElement("style", style));
   result.styles.clear();
   const scripts = Array.from(result.scripts).filter(uniqueElements).map((script, i) => {
-    return renderElement$1("script", script, false);
+    return renderElement("script", script, false);
   });
-  const links = Array.from(result.links).filter(uniqueElements).map((link) => renderElement$1("link", link, false));
+  const links = Array.from(result.links).filter(uniqueElements).map((link) => renderElement("link", link, false));
   return markHTMLString(links.join("\n") + styles.join("\n") + scripts.join("\n"));
 }
 async function* maybeRenderHead(result) {
-  if (alreadyHeadRenderedResults.has(result)) {
+  if (result._metadata.hasRenderedHead) {
     return;
   }
   yield renderHead(result);
 }
 
 typeof process === "object" && Object.prototype.toString.call(process) === "[object process]";
-
-new TextEncoder();
 
 function createComponent(cb) {
   cb.isAstroComponentFactory = true;
@@ -988,276 +2180,8 @@ function spreadAttributes(values, _name, { class: scopedClassName } = {}) {
   return markHTMLString(output);
 }
 
-const AstroJSX = "astro:jsx";
-const Empty = Symbol("empty");
-const toSlotName = (str) => str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
-function isVNode(vnode) {
-  return vnode && typeof vnode === "object" && vnode[AstroJSX];
-}
-function transformSlots(vnode) {
-  if (typeof vnode.type === "string")
-    return vnode;
-  const slots = {};
-  if (isVNode(vnode.props.children)) {
-    const child = vnode.props.children;
-    if (!isVNode(child))
-      return;
-    if (!("slot" in child.props))
-      return;
-    const name = toSlotName(child.props.slot);
-    slots[name] = [child];
-    slots[name]["$$slot"] = true;
-    delete child.props.slot;
-    delete vnode.props.children;
-  }
-  if (Array.isArray(vnode.props.children)) {
-    vnode.props.children = vnode.props.children.map((child) => {
-      if (!isVNode(child))
-        return child;
-      if (!("slot" in child.props))
-        return child;
-      const name = toSlotName(child.props.slot);
-      if (Array.isArray(slots[name])) {
-        slots[name].push(child);
-      } else {
-        slots[name] = [child];
-        slots[name]["$$slot"] = true;
-      }
-      delete child.props.slot;
-      return Empty;
-    }).filter((v) => v !== Empty);
-  }
-  Object.assign(vnode.props, slots);
-}
-function markRawChildren(child) {
-  if (typeof child === "string")
-    return markHTMLString(child);
-  if (Array.isArray(child))
-    return child.map((c) => markRawChildren(c));
-  return child;
-}
-function transformSetDirectives(vnode) {
-  if (!("set:html" in vnode.props || "set:text" in vnode.props))
-    return;
-  if ("set:html" in vnode.props) {
-    const children = markRawChildren(vnode.props["set:html"]);
-    delete vnode.props["set:html"];
-    Object.assign(vnode.props, { children });
-    return;
-  }
-  if ("set:text" in vnode.props) {
-    const children = vnode.props["set:text"];
-    delete vnode.props["set:text"];
-    Object.assign(vnode.props, { children });
-    return;
-  }
-}
-function createVNode(type, props) {
-  const vnode = {
-    [AstroJSX]: true,
-    type,
-    props: props ?? {}
-  };
-  transformSetDirectives(vnode);
-  transformSlots(vnode);
-  return vnode;
-}
-
-const ClientOnlyPlaceholder = "astro-client-only";
-const skipAstroJSXCheck = /* @__PURE__ */ new WeakSet();
-let originalConsoleError;
-let consoleFilterRefs = 0;
-async function renderJSX(result, vnode) {
-  switch (true) {
-    case vnode instanceof HTMLString:
-      if (vnode.toString().trim() === "") {
-        return "";
-      }
-      return vnode;
-    case typeof vnode === "string":
-      return markHTMLString(escapeHTML(vnode));
-    case (!vnode && vnode !== 0):
-      return "";
-    case Array.isArray(vnode):
-      return markHTMLString(
-        (await Promise.all(vnode.map((v) => renderJSX(result, v)))).join("")
-      );
-  }
-  if (isVNode(vnode)) {
-    switch (true) {
-      case vnode.type === Symbol.for("astro:fragment"):
-        return renderJSX(result, vnode.props.children);
-      case vnode.type.isAstroComponentFactory: {
-        let props = {};
-        let slots = {};
-        for (const [key, value] of Object.entries(vnode.props ?? {})) {
-          if (key === "children" || value && typeof value === "object" && value["$$slot"]) {
-            slots[key === "children" ? "default" : key] = () => renderJSX(result, value);
-          } else {
-            props[key] = value;
-          }
-        }
-        return markHTMLString(await renderToString(result, vnode.type, props, slots));
-      }
-      case (!vnode.type && vnode.type !== 0):
-        return "";
-      case (typeof vnode.type === "string" && vnode.type !== ClientOnlyPlaceholder):
-        return markHTMLString(await renderElement(result, vnode.type, vnode.props ?? {}));
-    }
-    if (vnode.type) {
-      let extractSlots2 = function(child) {
-        if (Array.isArray(child)) {
-          return child.map((c) => extractSlots2(c));
-        }
-        if (!isVNode(child)) {
-          _slots.default.push(child);
-          return;
-        }
-        if ("slot" in child.props) {
-          _slots[child.props.slot] = [..._slots[child.props.slot] ?? [], child];
-          delete child.props.slot;
-          return;
-        }
-        _slots.default.push(child);
-      };
-      if (typeof vnode.type === "function" && vnode.type["astro:renderer"]) {
-        skipAstroJSXCheck.add(vnode.type);
-      }
-      if (typeof vnode.type === "function" && vnode.props["server:root"]) {
-        const output2 = await vnode.type(vnode.props ?? {});
-        return await renderJSX(result, output2);
-      }
-      if (typeof vnode.type === "function" && !skipAstroJSXCheck.has(vnode.type)) {
-        useConsoleFilter();
-        try {
-          const output2 = await vnode.type(vnode.props ?? {});
-          if (output2 && output2[AstroJSX]) {
-            return await renderJSX(result, output2);
-          } else if (!output2) {
-            return await renderJSX(result, output2);
-          }
-        } catch (e) {
-          skipAstroJSXCheck.add(vnode.type);
-        } finally {
-          finishUsingConsoleFilter();
-        }
-      }
-      const { children = null, ...props } = vnode.props ?? {};
-      const _slots = {
-        default: []
-      };
-      extractSlots2(children);
-      for (const [key, value] of Object.entries(props)) {
-        if (value["$$slot"]) {
-          _slots[key] = value;
-          delete props[key];
-        }
-      }
-      const slotPromises = [];
-      const slots = {};
-      for (const [key, value] of Object.entries(_slots)) {
-        slotPromises.push(
-          renderJSX(result, value).then((output2) => {
-            if (output2.toString().trim().length === 0)
-              return;
-            slots[key] = () => output2;
-          })
-        );
-      }
-      await Promise.all(slotPromises);
-      let output;
-      if (vnode.type === ClientOnlyPlaceholder && vnode.props["client:only"]) {
-        output = await renderComponent(
-          result,
-          vnode.props["client:display-name"] ?? "",
-          null,
-          props,
-          slots
-        );
-      } else {
-        output = await renderComponent(
-          result,
-          typeof vnode.type === "function" ? vnode.type.name : vnode.type,
-          vnode.type,
-          props,
-          slots
-        );
-      }
-      if (typeof output !== "string" && Symbol.asyncIterator in output) {
-        let body = "";
-        for await (const chunk of output) {
-          let html = stringifyChunk(result, chunk);
-          body += html;
-        }
-        return markHTMLString(body);
-      } else {
-        return markHTMLString(output);
-      }
-    }
-  }
-  return markHTMLString(`${vnode}`);
-}
-async function renderElement(result, tag, { children, ...props }) {
-  return markHTMLString(
-    `<${tag}${spreadAttributes(props)}${markHTMLString(
-      (children == null || children == "") && voidElementNames.test(tag) ? `/>` : `>${children == null ? "" : await renderJSX(result, children)}</${tag}>`
-    )}`
-  );
-}
-function useConsoleFilter() {
-  consoleFilterRefs++;
-  if (!originalConsoleError) {
-    originalConsoleError = console.error;
-    try {
-      console.error = filteredConsoleError;
-    } catch (error) {
-    }
-  }
-}
-function finishUsingConsoleFilter() {
-  consoleFilterRefs--;
-}
-function filteredConsoleError(msg, ...rest) {
-  if (consoleFilterRefs > 0 && typeof msg === "string") {
-    const isKnownReactHookError = msg.includes("Warning: Invalid hook call.") && msg.includes("https://reactjs.org/link/invalid-hook-call");
-    if (isKnownReactHookError)
-      return;
-  }
-}
-
-const slotName = (str) => str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
-async function check(Component, props, { default: children = null, ...slotted } = {}) {
-  if (typeof Component !== "function")
-    return false;
-  const slots = {};
-  for (const [key, value] of Object.entries(slotted)) {
-    const name = slotName(key);
-    slots[name] = value;
-  }
-  try {
-    const result = await Component({ ...props, ...slots, children });
-    return result[AstroJSX];
-  } catch (e) {
-  }
-  return false;
-}
-async function renderToStaticMarkup(Component, props = {}, { default: children = null, ...slotted } = {}) {
-  const slots = {};
-  for (const [key, value] of Object.entries(slotted)) {
-    const name = slotName(key);
-    slots[name] = value;
-  }
-  const { result } = this;
-  const html = await renderJSX(result, createVNode(Component, { ...props, ...slots, children }));
-  return { html };
-}
-var server_default = {
-  check,
-  renderToStaticMarkup
-};
-
 const $$metadata$e = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$i = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$i = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ContentSection = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$i, $$props, $$slots);
   Astro2.self = $$ContentSection;
@@ -1551,7 +2475,7 @@ const $$module4$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", { modules: [{ module: $$module2$7, specifier: "./utils.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$h = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$h = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Icon = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$h, $$props, $$slots);
   Astro2.self = $$Icon;
@@ -1566,7 +2490,7 @@ const $$Icon = createComponent(async ($$result, $$props, $$slots) => {
     innerHTML = svg.innerHTML;
     props = svg.props;
   } catch (e) {
-    if ((Object.assign({"BASE_URL":"/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,})).MODE === "production") {
+    if ((Object.assign({"BASE_URL":"/portfolio/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,})).MODE === "production") {
       throw new Error(`[astro-icon] Unable to load icon "${name}"!
 ${e}`);
     }
@@ -1575,7 +2499,7 @@ ${e}`);
     title = `Failed to load "${name}"!`;
     console.error(e);
   }
-  return renderTemplate`${maybeRenderHead($$result)}<svg${spreadAttributes(props)}${addAttribute(name, "astro-icon")}>${markHTMLString((title ? `<title>${title}</title>` : "") + innerHTML)}</svg>`;
+  return renderTemplate`${maybeRenderHead($$result)}<svg${spreadAttributes(props)}${addAttribute(name, "astro-icon")}>${unescapeHTML((title ? `<title>${title}</title>` : "") + innerHTML)}</svg>`;
 });
 
 const AstroIcon = Symbol("AstroIcon");
@@ -1608,7 +2532,7 @@ const $$module3$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$d = createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", { modules: [{ module: $$module1$4, specifier: "./constants", assert: {} }, { module: $$module2$7, specifier: "./utils.ts", assert: {} }, { module: $$module3$3, specifier: "./context.ts", assert: {} }, { module: $$module4$1, specifier: "./Props.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$g = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$g = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Spritesheet = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$g, $$props, $$slots);
   Astro2.self = $$Spritesheet;
@@ -1616,7 +2540,7 @@ const $$Spritesheet = createComponent(async ($$result, $$props, $$slots) => {
   const names = await getUsedSprites($$result);
   const icons = await Promise.all(names.map((name) => {
     return load(name, {}, optimize).then((res) => ({ ...res, name })).catch((e) => {
-      if ((Object.assign({"BASE_URL":"/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,})).MODE === "production") {
+      if ((Object.assign({"BASE_URL":"/portfolio/","MODE":"production","DEV":false,"PROD":true},{_:process.env._,})).MODE === "production") {
         throw new Error(`[astro-icon] Unable to load icon "${name}"!
 ${e}`);
       }
@@ -1624,7 +2548,7 @@ ${e}`);
     });
   }));
   return renderTemplate`${maybeRenderHead($$result)}<svg${addAttribute(`display: none; ${style ?? ""}`.trim(), "style")}${spreadAttributes({ "aria-hidden": true, ...props })} astro-icon-spritesheet>
-    ${icons.map((icon) => renderTemplate`<symbol${spreadAttributes(icon.props)}${addAttribute(`${SPRITESHEET_NAMESPACE}:${icon.name}`, "id")}>${markHTMLString(icon.innerHTML)}</symbol>`)}
+    ${icons.map((icon) => renderTemplate`<symbol${spreadAttributes(icon.props)}${addAttribute(`${SPRITESHEET_NAMESPACE}:${icon.name}`, "id")}>${unescapeHTML(icon.innerHTML)}</symbol>`)}
 </svg>`;
 });
 
@@ -1640,18 +2564,18 @@ const $$module1$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", { modules: [{ module: $$module1$3, specifier: "./Spritesheet.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$f = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$f = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$SpriteProvider = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$f, $$props, $$slots);
   Astro2.self = $$SpriteProvider;
   const content = await Astro2.slots.render("default");
-  return renderTemplate`${renderComponent($$result, "Fragment", Fragment, {}, { "default": () => renderTemplate`${markHTMLString(content)}` })}
+  return renderTemplate`${renderComponent($$result, "Fragment", Fragment, {}, { "default": () => renderTemplate`${unescapeHTML(content)}` })}
 ${renderComponent($$result, "Spritesheet", $$Spritesheet, {})}
 `;
 });
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", { modules: [{ module: $$module1$4, specifier: "./constants", assert: {} }, { module: $$module2$7, specifier: "./utils.ts", assert: {} }, { module: $$module3$3, specifier: "./context.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$e = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$e = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Sprite = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$e, $$props, $$slots);
   Astro2.self = $$Sprite;
@@ -1695,7 +2619,7 @@ const $$module2$6 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$c = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", { modules: [{ module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$d = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$d = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$CompatibilityList = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$d, $$props, $$slots);
   Astro2.self = $$CompatibilityList;
@@ -1729,7 +2653,7 @@ const $$module2$5 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$b = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$5, specifier: "~/components/compatibility-list.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$c = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$c = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Compatibility = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$c, $$props, $$slots);
   Astro2.self = $$Compatibility;
@@ -1816,7 +2740,7 @@ const $$module1$2 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$a = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", { modules: [{ module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$b = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$b = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Footer = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$b, $$props, $$slots);
   Astro2.self = $$Footer;
@@ -1898,7 +2822,7 @@ const $$metadata$9 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
 
   updateIcon();
 ` }] });
-const $$Astro$a = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/theme-switcher.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$a = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/theme-switcher.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ThemeSwitcher = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$a, $$props, $$slots);
   Astro2.self = $$ThemeSwitcher;
@@ -1919,7 +2843,7 @@ const $$ThemeSwitcher = createComponent(async ($$result, $$props, $$slots) => {
   </div>
 </button>
 
-
+${maybeRenderHead($$result)}
 
 `;
 });
@@ -1968,7 +2892,7 @@ const $$metadata$8 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
     }
   });
 ` }] });
-const $$Astro$9 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/header.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$9 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/header.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Header = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$9, $$props, $$slots);
   Astro2.self = $$Header;
@@ -2028,7 +2952,7 @@ const $$Header = createComponent(async ($$result, $$props, $$slots) => {
   </div>
 </header>
 
-
+${maybeRenderHead($$result)}
 
 <noscript>
   <style>
@@ -2053,7 +2977,7 @@ const $$module4 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$7 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$8 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$8 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Intro = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$8, $$props, $$slots);
   Astro2.self = $$Intro;
@@ -2165,7 +3089,7 @@ const $$module3$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", { modules: [{ module: Image, specifier: "@11ty/eleventy-img", assert: {} }, { module: $$module2$3, specifier: "./main", assert: {} }, { module: $$module3$1, specifier: "./placeholder", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$7 = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$7 = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Image = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$7, $$props, $$slots);
   Astro2.self = $$Image;
@@ -2197,7 +3121,7 @@ const $$Image = createComponent(async ($$result, $$props, $$slots) => {
     class: classes
   };
   return renderTemplate`${maybeRenderHead($$result)}<figure${spreadAttributes(props)}>
-	${renderComponent($$result, "Fragment", Fragment, {}, { "default": () => renderTemplate`${markHTMLString(html)}` })}
+	${renderComponent($$result, "Fragment", Fragment, {}, { "default": () => renderTemplate`${unescapeHTML(html)}` })}
 	${caption && renderTemplate`<figcaption>${caption}</figcaption>`}
 </figure>`;
 });
@@ -2210,7 +3134,7 @@ const $$module1$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$6 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", { modules: [{ module: $$module1$1, specifier: "astro-eleventy-img", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$6 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$6 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ShowcaseCard = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$6, $$props, $$slots);
   Astro2.self = $$ShowcaseCard;
@@ -2279,7 +3203,7 @@ const $$module3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$5 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$2, specifier: "~/components/showcase-card.astro", assert: {} }, { module: $$module3, specifier: "~/data/showcase/sites.json", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$5 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$5 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Showcase = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$5, $$props, $$slots);
   Astro2.self = $$Showcase;
@@ -2403,7 +3327,7 @@ const $$metadata$4 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
     rafId = requestAnimationFrame(frame);
   }
 ` }] });
-const $$Astro$4 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/starfield.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$4 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/starfield.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Starfield = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$4, $$props, $$slots);
   Astro2.self = $$Starfield;
@@ -2411,7 +3335,7 @@ const $$Starfield = createComponent(async ($$result, $$props, $$slots) => {
   <canvas id="starfield-canvas"></canvas>
 </div>
 
-`;
+${maybeRenderHead($$result)}`;
 });
 
 const $$file$4 = "/Users/jason/Workspace/astro-landing/src/components/starfield.astro";
@@ -2426,7 +3350,7 @@ const $$module1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$3 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", { modules: [{ module: $$module1$1, specifier: "astro-eleventy-img", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$3 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$3 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$HeroImage = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
   Astro2.self = $$HeroImage;
@@ -2461,7 +3385,7 @@ const $$module2$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$2 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", { modules: [{ module: $$module1, specifier: "~/components/starfield.astro", assert: {} }, { module: $$module2$1, specifier: "~/components/hero-image.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$2 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$2 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Splash = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$2, $$props, $$slots);
   Astro2.self = $$Splash;
@@ -2508,7 +3432,7 @@ const $$module7 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$1 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$1 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$1 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Features = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
   Astro2.self = $$Features;
@@ -2576,7 +3500,7 @@ var __defProp = Object.defineProperty;
 var __template = (cooked, raw) => __freeze(__defProp(cooked, "raw", { value: __freeze(raw || cooked.slice()) }));
 var _a;
 const $$metadata = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", { modules: [{ module: $$module1$2, specifier: "~/components/compatibility.astro", assert: {} }, { module: $$module2, specifier: "~/components/features.astro", assert: {} }, { module: $$module3$2, specifier: "~/components/footer.astro", assert: {} }, { module: $$module4, specifier: "~/components/header.astro", assert: {} }, { module: $$module5, specifier: "~/components/intro.astro", assert: {} }, { module: $$module6, specifier: "~/components/showcase.astro", assert: {} }, { module: $$module7, specifier: "~/components/splash.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", "https://jasnsy.github.io/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Index = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$Index;
@@ -2593,7 +3517,7 @@ const $$Index = createComponent(async ($$result, $$props, $$slots) => {
 });
 
 const $$file = "/Users/jason/Workspace/astro-landing/src/pages/index.astro";
-const $$url = "";
+const $$url = "/portfolio";
 
 const _page0 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
@@ -2675,7 +3599,7 @@ function deserializeManifest(serializedManifest) {
   };
 }
 
-const _manifest = Object.assign(deserializeManifest({"adapterName":"@astrojs/vercel/serverless","routes":[{"file":"","links":["assets/index.32c313d9.css"],"scripts":[{"type":"external","value":"hoisted.b2d89190.js"}],"routeData":{"route":"/","type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/","_meta":{"trailingSlash":"ignore"}}}],"site":"https://astro-portfolio-gilt.vercel.app/","base":"/","markdown":{"drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[],"remarkRehype":{},"extendDefaultPlugins":false,"isAstroFlavoredMd":false},"pageMap":null,"renderers":[],"entryModules":{"\u0000@astrojs-ssr-virtual-entry":"entry.js","/astro/hoisted.js?q=0":"hoisted.b2d89190.js","astro:scripts/before-hydration.js":"data:text/javascript;charset=utf-8,//[no before-hydration script]"},"assets":["/assets/index.32c313d9.css","/favicon.ico","/favicon.svg","/hoisted.b2d89190.js","/social.jpg","/assets/images/astronaut/yLnzHhqALK-450.avif","/assets/images/astronaut/yLnzHhqALK-450.png","/assets/images/astronaut/yLnzHhqALK-450.webp","/assets/images/astronaut/yLnzHhqALK-800.avif","/assets/images/astronaut/yLnzHhqALK-800.png","/assets/images/astronaut/yLnzHhqALK-800.webp","/assets/images/hero/gDdfI9LZ83-1200.avif","/assets/images/hero/gDdfI9LZ83-1200.jpeg","/assets/images/hero/gDdfI9LZ83-1200.webp","/assets/images/hero/gDdfI9LZ83-450.avif","/assets/images/hero/gDdfI9LZ83-450.jpeg","/assets/images/hero/gDdfI9LZ83-450.webp","/assets/images/hero/gDdfI9LZ83-800.avif","/assets/images/hero/gDdfI9LZ83-800.jpeg","/assets/images/hero/gDdfI9LZ83-800.webp","/assets/images/hero/zNPh6foJwQ-1200.avif","/assets/images/hero/zNPh6foJwQ-1200.jpeg","/assets/images/hero/zNPh6foJwQ-1200.webp","/assets/images/hero/zNPh6foJwQ-450.avif","/assets/images/hero/zNPh6foJwQ-450.jpeg","/assets/images/hero/zNPh6foJwQ-450.webp","/assets/images/hero/zNPh6foJwQ-800.avif","/assets/images/hero/zNPh6foJwQ-800.jpeg","/assets/images/hero/zNPh6foJwQ-800.webp","/assets/images/showcase/VBzvsHZFNn-450.avif","/assets/images/showcase/VBzvsHZFNn-450.png","/assets/images/showcase/VBzvsHZFNn-450.webp","/assets/images/showcase/VBzvsHZFNn-800.avif","/assets/images/showcase/VBzvsHZFNn-800.png","/assets/images/showcase/VBzvsHZFNn-800.webp","/assets/images/showcase/XL4LjefiVn-450.avif","/assets/images/showcase/XL4LjefiVn-450.png","/assets/images/showcase/XL4LjefiVn-450.webp","/assets/images/showcase/XL4LjefiVn-800.avif","/assets/images/showcase/XL4LjefiVn-800.png","/assets/images/showcase/XL4LjefiVn-800.webp","/assets/images/showcase/XsJjJNVoLY-450.avif","/assets/images/showcase/XsJjJNVoLY-450.png","/assets/images/showcase/XsJjJNVoLY-450.webp","/assets/images/showcase/XsJjJNVoLY-800.avif","/assets/images/showcase/XsJjJNVoLY-800.png","/assets/images/showcase/XsJjJNVoLY-800.webp","/assets/images/showcase/Yu0_jHmtiW-348.avif","/assets/images/showcase/Yu0_jHmtiW-348.png","/assets/images/showcase/Yu0_jHmtiW-348.webp","/assets/images/showcase/_IPbM6qIYI-450.avif","/assets/images/showcase/_IPbM6qIYI-450.png","/assets/images/showcase/_IPbM6qIYI-450.webp","/assets/images/showcase/_IPbM6qIYI-800.avif","/assets/images/showcase/_IPbM6qIYI-800.png","/assets/images/showcase/_IPbM6qIYI-800.webp","/assets/images/showcase/g9vYzfI0uj-450.avif","/assets/images/showcase/g9vYzfI0uj-450.png","/assets/images/showcase/g9vYzfI0uj-450.webp","/assets/images/showcase/g9vYzfI0uj-800.avif","/assets/images/showcase/g9vYzfI0uj-800.png","/assets/images/showcase/g9vYzfI0uj-800.webp","/assets/images/showcase/kZtoOWPTn5-450.avif","/assets/images/showcase/kZtoOWPTn5-450.png","/assets/images/showcase/kZtoOWPTn5-450.webp","/assets/images/showcase/kZtoOWPTn5-800.avif","/assets/images/showcase/kZtoOWPTn5-800.png","/assets/images/showcase/kZtoOWPTn5-800.webp","/assets/images/showcase/yA2q_yIsp6-450.avif","/assets/images/showcase/yA2q_yIsp6-450.png","/assets/images/showcase/yA2q_yIsp6-450.webp","/assets/images/showcase/yA2q_yIsp6-800.avif","/assets/images/showcase/yA2q_yIsp6-800.png","/assets/images/showcase/yA2q_yIsp6-800.webp","/assets/images/showcase/yC-dmJk7dD-450.avif","/assets/images/showcase/yC-dmJk7dD-450.png","/assets/images/showcase/yC-dmJk7dD-450.webp","/assets/images/showcase/yC-dmJk7dD-800.avif","/assets/images/showcase/yC-dmJk7dD-800.png","/assets/images/showcase/yC-dmJk7dD-800.webp"]}), {
+const _manifest = Object.assign(deserializeManifest({"adapterName":"@astrojs/vercel/serverless","routes":[{"file":"","links":["assets/index.23c6f825.css"],"scripts":[{"type":"external","value":"hoisted.aef93a06.js"}],"routeData":{"route":"/","type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/","_meta":{"trailingSlash":"ignore"}}}],"site":"https://jasnsy.github.io/","base":"/portfolio/","markdown":{"drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[],"remarkRehype":{},"extendDefaultPlugins":false,"isAstroFlavoredMd":false},"pageMap":null,"renderers":[],"entryModules":{"\u0000@astrojs-ssr-virtual-entry":"entry.js","/astro/hoisted.js?q=0":"hoisted.aef93a06.js","astro:scripts/before-hydration.js":""},"assets":["/assets/index.23c6f825.css","/favicon.ico","/favicon.svg","/hoisted.aef93a06.js","/social.jpg","/assets/images/astronaut/yLnzHhqALK-450.avif","/assets/images/astronaut/yLnzHhqALK-450.png","/assets/images/astronaut/yLnzHhqALK-450.webp","/assets/images/astronaut/yLnzHhqALK-800.avif","/assets/images/astronaut/yLnzHhqALK-800.png","/assets/images/astronaut/yLnzHhqALK-800.webp","/assets/images/hero/gDdfI9LZ83-1200.avif","/assets/images/hero/gDdfI9LZ83-1200.jpeg","/assets/images/hero/gDdfI9LZ83-1200.webp","/assets/images/hero/gDdfI9LZ83-450.avif","/assets/images/hero/gDdfI9LZ83-450.jpeg","/assets/images/hero/gDdfI9LZ83-450.webp","/assets/images/hero/gDdfI9LZ83-800.avif","/assets/images/hero/gDdfI9LZ83-800.jpeg","/assets/images/hero/gDdfI9LZ83-800.webp","/assets/images/hero/zNPh6foJwQ-1200.avif","/assets/images/hero/zNPh6foJwQ-1200.jpeg","/assets/images/hero/zNPh6foJwQ-1200.webp","/assets/images/hero/zNPh6foJwQ-450.avif","/assets/images/hero/zNPh6foJwQ-450.jpeg","/assets/images/hero/zNPh6foJwQ-450.webp","/assets/images/hero/zNPh6foJwQ-800.avif","/assets/images/hero/zNPh6foJwQ-800.jpeg","/assets/images/hero/zNPh6foJwQ-800.webp","/assets/images/showcase/VBzvsHZFNn-450.avif","/assets/images/showcase/VBzvsHZFNn-450.png","/assets/images/showcase/VBzvsHZFNn-450.webp","/assets/images/showcase/VBzvsHZFNn-800.avif","/assets/images/showcase/VBzvsHZFNn-800.png","/assets/images/showcase/VBzvsHZFNn-800.webp","/assets/images/showcase/XL4LjefiVn-450.avif","/assets/images/showcase/XL4LjefiVn-450.png","/assets/images/showcase/XL4LjefiVn-450.webp","/assets/images/showcase/XL4LjefiVn-800.avif","/assets/images/showcase/XL4LjefiVn-800.png","/assets/images/showcase/XL4LjefiVn-800.webp","/assets/images/showcase/XsJjJNVoLY-450.avif","/assets/images/showcase/XsJjJNVoLY-450.png","/assets/images/showcase/XsJjJNVoLY-450.webp","/assets/images/showcase/XsJjJNVoLY-800.avif","/assets/images/showcase/XsJjJNVoLY-800.png","/assets/images/showcase/XsJjJNVoLY-800.webp","/assets/images/showcase/Yu0_jHmtiW-348.avif","/assets/images/showcase/Yu0_jHmtiW-348.png","/assets/images/showcase/Yu0_jHmtiW-348.webp","/assets/images/showcase/_IPbM6qIYI-450.avif","/assets/images/showcase/_IPbM6qIYI-450.png","/assets/images/showcase/_IPbM6qIYI-450.webp","/assets/images/showcase/_IPbM6qIYI-800.avif","/assets/images/showcase/_IPbM6qIYI-800.png","/assets/images/showcase/_IPbM6qIYI-800.webp","/assets/images/showcase/g9vYzfI0uj-450.avif","/assets/images/showcase/g9vYzfI0uj-450.png","/assets/images/showcase/g9vYzfI0uj-450.webp","/assets/images/showcase/g9vYzfI0uj-800.avif","/assets/images/showcase/g9vYzfI0uj-800.png","/assets/images/showcase/g9vYzfI0uj-800.webp","/assets/images/showcase/kZtoOWPTn5-450.avif","/assets/images/showcase/kZtoOWPTn5-450.png","/assets/images/showcase/kZtoOWPTn5-450.webp","/assets/images/showcase/kZtoOWPTn5-800.avif","/assets/images/showcase/kZtoOWPTn5-800.png","/assets/images/showcase/kZtoOWPTn5-800.webp","/assets/images/showcase/yA2q_yIsp6-450.avif","/assets/images/showcase/yA2q_yIsp6-450.png","/assets/images/showcase/yA2q_yIsp6-450.webp","/assets/images/showcase/yA2q_yIsp6-800.avif","/assets/images/showcase/yA2q_yIsp6-800.png","/assets/images/showcase/yA2q_yIsp6-800.webp","/assets/images/showcase/yC-dmJk7dD-450.avif","/assets/images/showcase/yC-dmJk7dD-450.png","/assets/images/showcase/yC-dmJk7dD-450.webp","/assets/images/showcase/yC-dmJk7dD-800.avif","/assets/images/showcase/yC-dmJk7dD-800.png","/assets/images/showcase/yC-dmJk7dD-800.webp"]}), {
 	pageMap: pageMap,
 	renderers: renderers
 });
