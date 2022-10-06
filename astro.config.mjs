@@ -4,7 +4,8 @@ import vercel from "@astrojs/vercel/serverless";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://astro-portfolio-gilt.vercel.app/",
+  site: "https://jasnsy.github.io",
+  base: "/portfolio",
   integrations: [tailwind()],
   vite: {
     ssr: {
