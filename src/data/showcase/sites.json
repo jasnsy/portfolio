@@ -1,12 +1,12 @@
 [
   {
     "title": "Wordle Clone",
-    "image": "src/data/showcase/images/werdle.png",
+    "image": "https://jsyimages.s3.us-west-2.amazonaws.com/werdle.png",
     "url": "https://jasnsy.github.io/werdle/"
   },
   {
     "title": "TypeScript TicTacToe",
-    "image": "src/data/showcase/images/tictactoe.png",
+    "image": "https://jsyimages.s3.us-west-2.amazonaws.com/tictactoe.png",
     "url": "https://github.com/jasnsy/tic-tac-toe"
   }
 ]
