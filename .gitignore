@@ -17,5 +17,6 @@ pnpm-debug.log*
 .env.production
 
 # macOS-specific files
+.vscode
 .DS_Store
 .vercel
