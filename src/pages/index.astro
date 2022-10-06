@@ -11,17 +11,15 @@ import "~/styles/index.css";
 const { site } = Astro;
 const image = new URL("social.jpg", site);
 const description =
-  "Build fast websites, faster. Astro is a new kind of site builder for the modern web. Lightning-fast performance meets powerful developer experience.";
+  "Jason Sy's Personal Website";
 ---
 
 <html lang="en" class="h-full motion-safe:scroll-smooth" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <title>Astro Landing Page</title>
+    <title>Jason Sy Portfolio</title>
     <meta name="description" content={description} />
 
     <!-- fonts -->
@@ -45,7 +43,7 @@ const description =
     </noscript>
 
     <!-- social media -->
-    <meta property="og:title" content="Astro" />
+    <meta property="og:title" content="portfolio" />
     <meta property="og:type" content="website" />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={image} />
@@ -83,7 +81,6 @@ const description =
     <Splash />
     <div class="px-8 py-32 space-y-24">
       <Intro />
-      <Features />
       <Compatibility />
       <Showcase />
     </div>

@@ -13,6 +13,7 @@
     "noEmit": true,
     // Alias `src/` to `~`
     "baseUrl": ".",
+    "allowJs": true,
     "paths": {
       "~/*": ["src/*"]
     }

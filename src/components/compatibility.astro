@@ -5,75 +5,76 @@ import CompatibilityList from "~/components/compatibility-list.astro";
 const frameworks = [
   {
     title: "React",
-    icon: "frameworks/react",
+    icon: "fa-brands:react",
     url: "https://reactjs.org/",
   },
   {
-    title: "Preact",
-    icon: "frameworks/preact",
-    url: "https://preactjs.com/",
-  },
-  {
-    title: "Svelte",
-    icon: "frameworks/svelte",
-    url: "https://svelte.dev/",
-  },
-  {
     title: "Vue",
-    icon: "frameworks/vue",
+    icon: "fa-brands:vuejs",
     url: "https://vuejs.org/",
   },
   {
-    title: "Solid",
-    icon: "frameworks/solid",
-    url: "https://www.solidjs.com/",
+    title: "Next",
+    icon: "frameworks/next",
+    url: "https://nextjs.org/",
   },
   {
-    title: "Lit",
-    icon: "frameworks/lit",
-    url: "https://lit.dev/",
+    title: "Astro",
+    icon: "frameworks/logomark",
+    url: "https://www.astro.build/",
+  },
+  {
+    title: "Node",
+    icon: "fa-brands:node-js",
+    url: "https://nodejs.org/en/",
+  },
+  {
+    title: "Express",
+    icon: "frameworks/express",
+    url: "https://expressjs.com/",
   },
 ];
 
-const platforms = [
+const languages = [
   {
-    title: "Netlify",
-    icon: "platforms/netlify",
-    url: "https://www.netlify.com/",
+    title: "JavaScript",
+    icon: "fa-brands:js",
+    url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
   },
   {
-    title: "Vercel",
-    icon: "platforms/vercel",
-    url: "https://vercel.com/",
+    title: "HTML5",
+    icon: "fa-brands:html5",
+    url: "https://developer.mozilla.org/en-US/docs/Web/HTML",
   },
   {
-    title: "Cloudflare",
-    icon: "fa-brands:cloudflare",
-    url: "https://pages.cloudflare.com/",
+    title: "CSS3",
+    icon: "fa-brands:css3-alt",
+    url: "https://www.w3schools.com/cssref/",
   },
   {
-    title: "Render",
-    icon: "platforms/render",
-    url: "https://render.com/",
+    title: "GraphQL",
+    icon: "platforms/graphql",
+    url: "https://graphql.org/",
   },
   {
     title: "GitHub",
     icon: "fa-brands:github",
-    url: "https://pages.github.com/",
+    url: "https://www.github.com/",
   },
   {
-    title: "GitLab",
-    icon: "fa-brands:gitlab",
-    url: "https://docs.gitlab.com/ee/user/project/pages/",
+    title: "AWS",
+    icon: "fa-brands:aws",
+    url: "https://aws.amazon.com/",
   },
 ];
 ---
 
-<ContentSection title="Compatibility" id="compatibility">
+<ContentSection title="Tech Stack" id="stack">
   <Fragment slot="lead">
-    Astro <span class="text-primary">plays nice</span>. Bring your own UI{" "}
-    <span class="text-primary">framework</span>
-    and deploy to your favorite <span class="text-primary">platform</span>.
+    I have working <span class="text-primary">experience</span> with many {" "}
+    <span class="text-primary">frameworks</span>
+    and other <span class="text-primary">technologies</span>.
+    Here are a few but I've worked on projects with <span class="text-primary">many more</span>.
   </Fragment>
   <CompatibilityList
     title="Frameworks"
@@ -81,8 +82,8 @@ const platforms = [
     url="https://docs.astro.build/core-concepts/framework-components/"
   />
   <CompatibilityList
-    title="Platforms"
-    data={platforms}
+    title="Other"
+    data={languages}
     url="https://docs.astro.build/guides/deploy/"
   />
 </ContentSection>

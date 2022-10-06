@@ -3,9 +3,9 @@ import { Icon } from "astro-icon";
 import ThemeSwitcher from "~/components/theme-switcher.astro";
 
 const navItems = [
-  { title: "Features", url: "#features" },
-  { title: "Compatibility", url: "#compatibility" },
-  { title: "Showcase", url: "#showcase" },
+  { title: "About", url: "#intro" },
+  { title: "Stack", url: "#stack" },
+  { title: "Projects", url: "#projects" },
 ];
 ---
 
@@ -13,10 +13,10 @@ const navItems = [
   id="page-header"
   class="absolute bottom-0 z-10 flex items-center justify-between w-full px-8 py-4 text-white border-b border-transparent"
 >
-  <a class="flex items-center gap-3 hover:!text-default" href="#">
-    <h1 class="sr-only">Astro</h1>
-    <Icon name="logomark" class="h-10" />
-    <Icon name="wordmark" class="hidden h-4 sm:block" />
+  <a class="flex items-baseline gap-3 hover:!text-default" href="#">
+    <h1 class="sr-only">JSy</h1>
+    <div class="monogram">JSy</div>
+    <!-- <div class="font-bold">.dev</div> -->
   </a>
   <div>
     <div class="flex items-center gap-6">
@@ -57,7 +57,7 @@ const navItems = [
             </button>
           </header>
           <div class="flex justify-center">
-            <Icon name="logomark" class="h-16" />
+            <div class="monogram">JSy</div>
           </div>
           <nav>
             <ul class="flex flex-col">
@@ -128,4 +128,16 @@ const navItems = [
   .modal.is-open {
     @apply block;
   }
+  .monogram {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.25em;
+		height: 2.25em;
+    padding-right: 2px;
+		font-weight: 900;
+		letter-spacing: -0.125rem;
+		border: 3px solid currentColor;
+		border-radius: 5%;
+	}
 </style>
