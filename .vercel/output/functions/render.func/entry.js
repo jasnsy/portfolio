@@ -1257,7 +1257,7 @@ var server_default = {
 };
 
 const $$metadata$e = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", { modules: [], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$i = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$i = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/content-section.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ContentSection = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$i, $$props, $$slots);
   Astro2.self = $$ContentSection;
@@ -1551,7 +1551,7 @@ const $$module4$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", { modules: [{ module: $$module2$7, specifier: "./utils.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$h = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$h = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Icon.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Icon = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$h, $$props, $$slots);
   Astro2.self = $$Icon;
@@ -1608,7 +1608,7 @@ const $$module3$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$d = createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", { modules: [{ module: $$module1$4, specifier: "./constants", assert: {} }, { module: $$module2$7, specifier: "./utils.ts", assert: {} }, { module: $$module3$3, specifier: "./context.ts", assert: {} }, { module: $$module4$1, specifier: "./Props.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$g = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$g = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Spritesheet.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Spritesheet = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$g, $$props, $$slots);
   Astro2.self = $$Spritesheet;
@@ -1640,7 +1640,7 @@ const $$module1$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", { modules: [{ module: $$module1$3, specifier: "./Spritesheet.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$f = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$f = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/SpriteProvider.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$SpriteProvider = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$f, $$props, $$slots);
   Astro2.self = $$SpriteProvider;
@@ -1651,7 +1651,7 @@ ${renderComponent($$result, "Spritesheet", $$Spritesheet, {})}
 });
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", { modules: [{ module: $$module1$4, specifier: "./constants", assert: {} }, { module: $$module2$7, specifier: "./utils.ts", assert: {} }, { module: $$module3$3, specifier: "./context.ts", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$e = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$e = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-icon/lib/Sprite.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Sprite = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$e, $$props, $$slots);
   Astro2.self = $$Sprite;
@@ -1695,7 +1695,7 @@ const $$module2$6 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$c = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", { modules: [{ module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$d = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$d = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility-list.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$CompatibilityList = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$d, $$props, $$slots);
   Astro2.self = $$CompatibilityList;
@@ -1729,7 +1729,7 @@ const $$module2$5 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$b = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$5, specifier: "~/components/compatibility-list.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$c = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$c = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/compatibility.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Compatibility = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$c, $$props, $$slots);
   Astro2.self = $$Compatibility;
@@ -1816,7 +1816,7 @@ const $$module1$2 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$a = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", { modules: [{ module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$b = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$b = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/footer.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Footer = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$b, $$props, $$slots);
   Astro2.self = $$Footer;
@@ -1898,7 +1898,7 @@ const $$metadata$9 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
 
   updateIcon();
 ` }] });
-const $$Astro$a = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/theme-switcher.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$a = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/theme-switcher.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ThemeSwitcher = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$a, $$props, $$slots);
   Astro2.self = $$ThemeSwitcher;
@@ -1968,7 +1968,7 @@ const $$metadata$8 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
     }
   });
 ` }] });
-const $$Astro$9 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/header.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$9 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/header.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Header = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$9, $$props, $$slots);
   Astro2.self = $$Header;
@@ -2053,7 +2053,7 @@ const $$module4 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$7 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$8 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$8 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/intro.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Intro = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$8, $$props, $$slots);
   Astro2.self = $$Intro;
@@ -2165,7 +2165,7 @@ const $$module3$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 createMetadata("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", { modules: [{ module: Image, specifier: "@11ty/eleventy-img", assert: {} }, { module: $$module2$3, specifier: "./main", assert: {} }, { module: $$module3$1, specifier: "./placeholder", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$7 = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$7 = createAstro("/@fs/Users/jason/Workspace/astro-landing/node_modules/astro-eleventy-img/src/Image.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Image = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$7, $$props, $$slots);
   Astro2.self = $$Image;
@@ -2210,7 +2210,7 @@ const $$module1$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$6 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", { modules: [{ module: $$module1$1, specifier: "astro-eleventy-img", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$6 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$6 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase-card.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$ShowcaseCard = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$6, $$props, $$slots);
   Astro2.self = $$ShowcaseCard;
@@ -2279,7 +2279,7 @@ const $$module3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$5 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$2, specifier: "~/components/showcase-card.astro", assert: {} }, { module: $$module3, specifier: "~/data/showcase/sites.json", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$5 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$5 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/showcase.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Showcase = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$5, $$props, $$slots);
   Astro2.self = $$Showcase;
@@ -2403,7 +2403,7 @@ const $$metadata$4 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/sr
     rafId = requestAnimationFrame(frame);
   }
 ` }] });
-const $$Astro$4 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/starfield.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$4 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/starfield.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Starfield = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$4, $$props, $$slots);
   Astro2.self = $$Starfield;
@@ -2426,7 +2426,7 @@ const $$module1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$3 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", { modules: [{ module: $$module1$1, specifier: "astro-eleventy-img", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$3 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$3 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/hero-image.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$HeroImage = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
   Astro2.self = $$HeroImage;
@@ -2461,7 +2461,7 @@ const $$module2$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.definePropert
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$2 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", { modules: [{ module: $$module1, specifier: "~/components/starfield.astro", assert: {} }, { module: $$module2$1, specifier: "~/components/hero-image.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$2 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$2 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/splash.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Splash = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$2, $$props, $$slots);
   Astro2.self = $$Splash;
@@ -2508,7 +2508,7 @@ const $$module7 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const $$metadata$1 = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", { modules: [{ module: $$module1$5, specifier: "~/components/content-section.astro", assert: {} }, { module: $$module2$6, specifier: "astro-icon", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro$1 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro$1 = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/components/features.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Features = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
   Astro2.self = $$Features;
@@ -2576,7 +2576,7 @@ var __defProp = Object.defineProperty;
 var __template = (cooked, raw) => __freeze(__defProp(cooked, "raw", { value: __freeze(raw || cooked.slice()) }));
 var _a;
 const $$metadata = createMetadata("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", { modules: [{ module: $$module1$2, specifier: "~/components/compatibility.astro", assert: {} }, { module: $$module2, specifier: "~/components/features.astro", assert: {} }, { module: $$module3$2, specifier: "~/components/footer.astro", assert: {} }, { module: $$module4, specifier: "~/components/header.astro", assert: {} }, { module: $$module5, specifier: "~/components/intro.astro", assert: {} }, { module: $$module6, specifier: "~/components/showcase.astro", assert: {} }, { module: $$module7, specifier: "~/components/splash.astro", assert: {} }], hydratedComponents: [], clientOnlyComponents: [], hydrationDirectives: /* @__PURE__ */ new Set([]), hoisted: [] });
-const $$Astro = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", "https://astro-moon-landing.netlify.app/", "file:///Users/jason/Workspace/astro-landing/");
+const $$Astro = createAstro("/@fs/Users/jason/Workspace/astro-landing/src/pages/index.astro", "https://astro-portfolio-gilt.vercel.app/", "file:///Users/jason/Workspace/astro-landing/");
 const $$Index = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$Index;
@@ -2675,7 +2675,7 @@ function deserializeManifest(serializedManifest) {
   };
 }
 
-const _manifest = Object.assign(deserializeManifest({"adapterName":"@astrojs/vercel/serverless","routes":[{"file":"","links":["assets/index.32c313d9.css"],"scripts":[{"type":"external","value":"hoisted.b2d89190.js"}],"routeData":{"route":"/","type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/","_meta":{"trailingSlash":"ignore"}}}],"site":"https://astro-moon-landing.netlify.app/","base":"/","markdown":{"drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[],"remarkRehype":{},"extendDefaultPlugins":false,"isAstroFlavoredMd":false},"pageMap":null,"renderers":[],"entryModules":{"\u0000@astrojs-ssr-virtual-entry":"entry.js","/astro/hoisted.js?q=0":"hoisted.b2d89190.js","astro:scripts/before-hydration.js":"data:text/javascript;charset=utf-8,//[no before-hydration script]"},"assets":["/assets/index.32c313d9.css","/favicon.ico","/favicon.svg","/hoisted.b2d89190.js","/social.jpg","/assets/images/astronaut/yLnzHhqALK-450.avif","/assets/images/astronaut/yLnzHhqALK-450.png","/assets/images/astronaut/yLnzHhqALK-450.webp","/assets/images/astronaut/yLnzHhqALK-800.avif","/assets/images/astronaut/yLnzHhqALK-800.png","/assets/images/astronaut/yLnzHhqALK-800.webp","/assets/images/hero/gDdfI9LZ83-1200.avif","/assets/images/hero/gDdfI9LZ83-1200.jpeg","/assets/images/hero/gDdfI9LZ83-1200.webp","/assets/images/hero/gDdfI9LZ83-450.avif","/assets/images/hero/gDdfI9LZ83-450.jpeg","/assets/images/hero/gDdfI9LZ83-450.webp","/assets/images/hero/gDdfI9LZ83-800.avif","/assets/images/hero/gDdfI9LZ83-800.jpeg","/assets/images/hero/gDdfI9LZ83-800.webp","/assets/images/hero/zNPh6foJwQ-1200.avif","/assets/images/hero/zNPh6foJwQ-1200.jpeg","/assets/images/hero/zNPh6foJwQ-1200.webp","/assets/images/hero/zNPh6foJwQ-450.avif","/assets/images/hero/zNPh6foJwQ-450.jpeg","/assets/images/hero/zNPh6foJwQ-450.webp","/assets/images/hero/zNPh6foJwQ-800.avif","/assets/images/hero/zNPh6foJwQ-800.jpeg","/assets/images/hero/zNPh6foJwQ-800.webp","/assets/images/showcase/VBzvsHZFNn-450.avif","/assets/images/showcase/VBzvsHZFNn-450.png","/assets/images/showcase/VBzvsHZFNn-450.webp","/assets/images/showcase/VBzvsHZFNn-800.avif","/assets/images/showcase/VBzvsHZFNn-800.png","/assets/images/showcase/VBzvsHZFNn-800.webp","/assets/images/showcase/XL4LjefiVn-450.avif","/assets/images/showcase/XL4LjefiVn-450.png","/assets/images/showcase/XL4LjefiVn-450.webp","/assets/images/showcase/XL4LjefiVn-800.avif","/assets/images/showcase/XL4LjefiVn-800.png","/assets/images/showcase/XL4LjefiVn-800.webp","/assets/images/showcase/XsJjJNVoLY-450.avif","/assets/images/showcase/XsJjJNVoLY-450.png","/assets/images/showcase/XsJjJNVoLY-450.webp","/assets/images/showcase/XsJjJNVoLY-800.avif","/assets/images/showcase/XsJjJNVoLY-800.png","/assets/images/showcase/XsJjJNVoLY-800.webp","/assets/images/showcase/Yu0_jHmtiW-348.avif","/assets/images/showcase/Yu0_jHmtiW-348.png","/assets/images/showcase/Yu0_jHmtiW-348.webp","/assets/images/showcase/_IPbM6qIYI-450.avif","/assets/images/showcase/_IPbM6qIYI-450.png","/assets/images/showcase/_IPbM6qIYI-450.webp","/assets/images/showcase/_IPbM6qIYI-800.avif","/assets/images/showcase/_IPbM6qIYI-800.png","/assets/images/showcase/_IPbM6qIYI-800.webp","/assets/images/showcase/g9vYzfI0uj-450.avif","/assets/images/showcase/g9vYzfI0uj-450.png","/assets/images/showcase/g9vYzfI0uj-450.webp","/assets/images/showcase/g9vYzfI0uj-800.avif","/assets/images/showcase/g9vYzfI0uj-800.png","/assets/images/showcase/g9vYzfI0uj-800.webp","/assets/images/showcase/kZtoOWPTn5-450.avif","/assets/images/showcase/kZtoOWPTn5-450.png","/assets/images/showcase/kZtoOWPTn5-450.webp","/assets/images/showcase/kZtoOWPTn5-800.avif","/assets/images/showcase/kZtoOWPTn5-800.png","/assets/images/showcase/kZtoOWPTn5-800.webp","/assets/images/showcase/yA2q_yIsp6-450.avif","/assets/images/showcase/yA2q_yIsp6-450.png","/assets/images/showcase/yA2q_yIsp6-450.webp","/assets/images/showcase/yA2q_yIsp6-800.avif","/assets/images/showcase/yA2q_yIsp6-800.png","/assets/images/showcase/yA2q_yIsp6-800.webp","/assets/images/showcase/yC-dmJk7dD-450.avif","/assets/images/showcase/yC-dmJk7dD-450.png","/assets/images/showcase/yC-dmJk7dD-450.webp","/assets/images/showcase/yC-dmJk7dD-800.avif","/assets/images/showcase/yC-dmJk7dD-800.png","/assets/images/showcase/yC-dmJk7dD-800.webp"]}), {
+const _manifest = Object.assign(deserializeManifest({"adapterName":"@astrojs/vercel/serverless","routes":[{"file":"","links":["assets/index.32c313d9.css"],"scripts":[{"type":"external","value":"hoisted.47a8402d.js"}],"routeData":{"route":"/","type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/","_meta":{"trailingSlash":"ignore"}}}],"site":"https://astro-portfolio-gilt.vercel.app/","base":"/","markdown":{"drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[],"remarkRehype":{},"extendDefaultPlugins":false,"isAstroFlavoredMd":false},"pageMap":null,"renderers":[],"entryModules":{"\u0000@astrojs-ssr-virtual-entry":"entry.js","/astro/hoisted.js?q=0":"hoisted.47a8402d.js","astro:scripts/before-hydration.js":"data:text/javascript;charset=utf-8,//[no before-hydration script]"},"assets":["/assets/index.32c313d9.css","/favicon.ico","/favicon.svg","/hoisted.47a8402d.js","/social.jpg","/assets/images/astronaut/yLnzHhqALK-450.avif","/assets/images/astronaut/yLnzHhqALK-450.png","/assets/images/astronaut/yLnzHhqALK-450.webp","/assets/images/astronaut/yLnzHhqALK-800.avif","/assets/images/astronaut/yLnzHhqALK-800.png","/assets/images/astronaut/yLnzHhqALK-800.webp","/assets/images/hero/gDdfI9LZ83-1200.avif","/assets/images/hero/gDdfI9LZ83-1200.jpeg","/assets/images/hero/gDdfI9LZ83-1200.webp","/assets/images/hero/gDdfI9LZ83-450.avif","/assets/images/hero/gDdfI9LZ83-450.jpeg","/assets/images/hero/gDdfI9LZ83-450.webp","/assets/images/hero/gDdfI9LZ83-800.avif","/assets/images/hero/gDdfI9LZ83-800.jpeg","/assets/images/hero/gDdfI9LZ83-800.webp","/assets/images/hero/zNPh6foJwQ-1200.avif","/assets/images/hero/zNPh6foJwQ-1200.jpeg","/assets/images/hero/zNPh6foJwQ-1200.webp","/assets/images/hero/zNPh6foJwQ-450.avif","/assets/images/hero/zNPh6foJwQ-450.jpeg","/assets/images/hero/zNPh6foJwQ-450.webp","/assets/images/hero/zNPh6foJwQ-800.avif","/assets/images/hero/zNPh6foJwQ-800.jpeg","/assets/images/hero/zNPh6foJwQ-800.webp","/assets/images/showcase/VBzvsHZFNn-450.avif","/assets/images/showcase/VBzvsHZFNn-450.png","/assets/images/showcase/VBzvsHZFNn-450.webp","/assets/images/showcase/VBzvsHZFNn-800.avif","/assets/images/showcase/VBzvsHZFNn-800.png","/assets/images/showcase/VBzvsHZFNn-800.webp","/assets/images/showcase/XL4LjefiVn-450.avif","/assets/images/showcase/XL4LjefiVn-450.png","/assets/images/showcase/XL4LjefiVn-450.webp","/assets/images/showcase/XL4LjefiVn-800.avif","/assets/images/showcase/XL4LjefiVn-800.png","/assets/images/showcase/XL4LjefiVn-800.webp","/assets/images/showcase/XsJjJNVoLY-450.avif","/assets/images/showcase/XsJjJNVoLY-450.png","/assets/images/showcase/XsJjJNVoLY-450.webp","/assets/images/showcase/XsJjJNVoLY-800.avif","/assets/images/showcase/XsJjJNVoLY-800.png","/assets/images/showcase/XsJjJNVoLY-800.webp","/assets/images/showcase/Yu0_jHmtiW-348.avif","/assets/images/showcase/Yu0_jHmtiW-348.png","/assets/images/showcase/Yu0_jHmtiW-348.webp","/assets/images/showcase/_IPbM6qIYI-450.avif","/assets/images/showcase/_IPbM6qIYI-450.png","/assets/images/showcase/_IPbM6qIYI-450.webp","/assets/images/showcase/_IPbM6qIYI-800.avif","/assets/images/showcase/_IPbM6qIYI-800.png","/assets/images/showcase/_IPbM6qIYI-800.webp","/assets/images/showcase/g9vYzfI0uj-450.avif","/assets/images/showcase/g9vYzfI0uj-450.png","/assets/images/showcase/g9vYzfI0uj-450.webp","/assets/images/showcase/g9vYzfI0uj-800.avif","/assets/images/showcase/g9vYzfI0uj-800.png","/assets/images/showcase/g9vYzfI0uj-800.webp","/assets/images/showcase/kZtoOWPTn5-450.avif","/assets/images/showcase/kZtoOWPTn5-450.png","/assets/images/showcase/kZtoOWPTn5-450.webp","/assets/images/showcase/kZtoOWPTn5-800.avif","/assets/images/showcase/kZtoOWPTn5-800.png","/assets/images/showcase/kZtoOWPTn5-800.webp","/assets/images/showcase/yA2q_yIsp6-450.avif","/assets/images/showcase/yA2q_yIsp6-450.png","/assets/images/showcase/yA2q_yIsp6-450.webp","/assets/images/showcase/yA2q_yIsp6-800.avif","/assets/images/showcase/yA2q_yIsp6-800.png","/assets/images/showcase/yA2q_yIsp6-800.webp","/assets/images/showcase/yC-dmJk7dD-450.avif","/assets/images/showcase/yC-dmJk7dD-450.png","/assets/images/showcase/yC-dmJk7dD-450.webp","/assets/images/showcase/yC-dmJk7dD-800.avif","/assets/images/showcase/yC-dmJk7dD-800.png","/assets/images/showcase/yC-dmJk7dD-800.webp"]}), {
 	pageMap: pageMap,
 	renderers: renderers
 });
