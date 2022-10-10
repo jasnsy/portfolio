@@ -1,6 +1,5 @@
 # Portfolio
 Created with [Astro](https://astro.build)
-Trying something
 
 ## Features
 
